@@ -157,7 +157,7 @@ export function showEffectDetail(effectId, activeSkillData, defaultParams = {}) 
     calcContainer.appendChild(grid);
 
     const resultsDiv = el('div', { id: 'calcResults' });
-    const calcBtn = el('button', { class: 'btn btn-primary btn-sm mt-2' }, '计算');
+    const calcBtn = el('button', { class: 'btn btn-primary btn-sm mt-2 mb-4' }, '计算');
 
     const updateResults = () => {
       const values = {};

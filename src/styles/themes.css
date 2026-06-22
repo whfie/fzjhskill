@@ -35,6 +35,9 @@
   --success: #5a8a6e;
   --success-light: #e8f0ea;
 
+  --element: #7a5c9e;
+  --element-light: #f0e6f5;
+
   --border: #d8cfb8;
   --border-light: #e8e0cc;
   --border-strong: #b8a878;
@@ -88,6 +91,9 @@
   --success: #4a7c59;
   --success-light: #1a2e22;
 
+  --element: #a87ac5;
+  --element-light: #2a1a30;
+
   --border: #2a2a4a;
   --border-light: #222240;
   --border-strong: #3a3a5a;
@@ -140,6 +146,9 @@
   --info-light: #dce8ec;
   --success: #7a8c5c;
   --success-light: #e8ead8;
+
+  --element: #9e6b85;
+  --element-light: #e8d8e0;
 
   --border: #c0b898;
   --border-light: #d0c8a8;

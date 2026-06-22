@@ -1,16 +1,28 @@
 // 武学查询页面 - 主逻辑
-import '../styles/main.css';
-import { initHeader } from '../components/Header.js';
-import { createSearchBar, getSearchValue } from '../components/SearchBar.js';
+import "../styles/main.css";
+import { initHeader } from "../components/Header.js";
+import { createSearchBar, getSearchValue } from "../components/SearchBar.js";
 import {
-  createFilterPanel, populateFilterBadges, getUniqueValues,
-  matchesFilters, filterState,
-} from '../components/FilterPanel.js';
-import { createSkillCard } from '../components/SkillCard.js';
-import { showSkillDetail } from '../components/SkillDetailModal.js';
-import { loadResource, loadResources, getDataVersion } from '../core/dataLoader.js';
-import { setSkillLookup } from '../data/conditionParser.js';
-import { el, clearChildren, batchRender } from '../utils/dom.js';
+  createFilterPanel,
+  populateFilterBadges,
+  getUniqueValues,
+  matchesFilters,
+  filterState,
+} from "../components/FilterPanel.js";
+import { createSkillCard } from "../components/SkillCard.js";
+import {
+  showBasicAttributesModal,
+  showActiveSkillModal,
+  showAllActiveSkillsModal,
+  showPassiveSkillsModal,
+} from "../components/SkillDetailModal.js";
+import {
+  loadResource,
+  loadResources,
+  getDataVersion,
+} from "../core/dataLoader.js";
+import { setSkillLookup } from "../data/conditionParser.js";
+import { el, clearChildren, batchRender } from "../utils/dom.js";
 
 let skillData = null;
 let activeSkillData = null;
@@ -40,17 +52,19 @@ function buildSearchIndex(skillsData, activeData) {
         }
       }
     }
-    searchIndex.set(skillId, parts.join(' ').toLowerCase());
+    searchIndex.set(skillId, parts.join(" ").toLowerCase());
   }
 }
 
 async function initWuxuePage() {
-  await initHeader('wuxue');
+  await initHeader("wuxue");
 
-  const container = document.getElementById('app');
-  container.appendChild(el('h1', { class: 'page-title' }, '武学技能查询'));
-  const version = await getDataVersion().catch(() => '');
-  container.appendChild(el('p', { class: 'page-subtitle' }, `数据日期：${version || '加载中...'}`));
+  const container = document.getElementById("app");
+  container.appendChild(el("h1", { class: "page-title" }, "武学技能查询"));
+  const version = await getDataVersion().catch(() => "");
+  container.appendChild(
+    el("p", { class: "page-subtitle" }, `数据日期：${version || "加载中..."}`),
+  );
 
   // 搜索栏
   container.appendChild(createSearchBar(refreshList));
@@ -59,10 +73,12 @@ async function initWuxuePage() {
   container.appendChild(createFilterPanel(refreshList));
 
   // 统计信息
-  container.appendChild(el('div', { class: 'stats-info', id: 'statsInfo' }, ''));
+  container.appendChild(
+    el("div", { class: "stats-info", id: "statsInfo" }, ""),
+  );
 
   // 技能列表容器
-  const listContainer = el('div', { class: 'card-grid', id: 'skillList' });
+  const listContainer = el("div", { class: "card-grid", id: "skillList" });
   container.appendChild(listContainer);
 
   // 加载中
@@ -70,28 +86,55 @@ async function initWuxuePage() {
 
   try {
     // 优先加载核心数据
-    skillData = await loadResource('skill');
+    skillData = await loadResource("skill");
     // 修正 yidaoliu 武器类型
     if (skillData.skills?.yidaoliu) {
-      skillData.skills.yidaoliu.weapontype = 'jianfa1,jianfa2,jianfa3,jianfa4,jianfa5,daofa1,daofa2,daofa3,daofa4,daofa5';
+      skillData.skills.yidaoliu.weapontype =
+        "jianfa1,jianfa2,jianfa3,jianfa4,jianfa5,daofa1,daofa2,daofa3,daofa4,daofa5";
     }
 
     // 注入技能查询回调
-    setSkillLookup((id) => skillData?.skills?.[id] ? { name: skillData.skills[id].name } : null);
+    setSkillLookup((id) =>
+      skillData?.skills?.[id] ? { name: skillData.skills[id].name } : null,
+    );
 
     // 立即渲染
     refreshList();
 
     // 填充过滤器
-    populateFilterBadges('familyFilters', getUniqueValues(skillData.skills, 'familyList'), 'family', refreshList);
-    populateFilterBadges('elementFilters', getUniqueValues(skillData.skills, 'autoZhaoAtkDamageClass'), 'element', refreshList);
-    populateFilterBadges('methodsFilters', getUniqueValues(skillData.skills, 'methods'), 'methods', refreshList);
+    populateFilterBadges(
+      "familyFilters",
+      getUniqueValues(skillData.skills, "familyList"),
+      "family",
+      refreshList,
+    );
+    populateFilterBadges(
+      "elementFilters",
+      getUniqueValues(skillData.skills, "autoZhaoAtkDamageClass"),
+      "element",
+      refreshList,
+    );
+    populateFilterBadges(
+      "methodsFilters",
+      getUniqueValues(skillData.skills, "methods"),
+      "methods",
+      refreshList,
+    );
 
     // 并行加载附加数据（bookSkills 失败不阻塞主流程）
     const [activeZhaoRes, skillAutoRes, bookSkillsRes] = await Promise.all([
-      loadResource('activeZhao').catch((e) => { console.warn('activeZhao 加载失败:', e); return null; }),
-      loadResource('skillAuto').catch((e) => { console.warn('skillAuto 加载失败:', e); return null; }),
-      loadResource('bookSkills').catch((e) => { console.warn('bookSkills 加载失败:', e); return null; }),
+      loadResource("activeZhao").catch((e) => {
+        console.warn("activeZhao 加载失败:", e);
+        return null;
+      }),
+      loadResource("skillAuto").catch((e) => {
+        console.warn("skillAuto 加载失败:", e);
+        return null;
+      }),
+      loadResource("bookSkills").catch((e) => {
+        console.warn("bookSkills 加载失败:", e);
+        return null;
+      }),
     ]);
     activeSkillData = activeZhaoRes;
     skillAutoData = skillAutoRes;
@@ -100,28 +143,32 @@ async function initWuxuePage() {
     // 建立搜索索引
     buildSearchIndex(skillData, activeSkillData);
 
-    // 若搜索框已有内容则重新刷新
-    if (getSearchValue().trim()) refreshList();
+    // 附加数据加载后重新渲染卡片（显示主动技能按钮和被动数据）
+    refreshList();
   } catch (err) {
-    console.error('加载数据失败:', err);
-    listContainer.innerHTML = '';
-    listContainer.appendChild(el('div', { class: 'empty-state' }, [
-      el('div', { class: 'empty-state-icon' }, '!'),
-      el('p', {}, '加载数据失败，请检查网络后重试'),
-    ]));
+    console.error("加载数据失败:", err);
+    listContainer.innerHTML = "";
+    listContainer.appendChild(
+      el("div", { class: "empty-state" }, [
+        el("div", { class: "empty-state-icon" }, "!"),
+        el("p", {}, "加载数据失败，请检查网络后重试"),
+      ]),
+    );
   }
 }
 
 function showLoading(container) {
   clearChildren(container);
-  container.appendChild(el('div', { class: 'loading-spinner' }, [
-    el('div', { class: 'spinner' }),
-    el('p', {}, '加载数据中...'),
-  ]));
+  container.appendChild(
+    el("div", { class: "loading-spinner" }, [
+      el("div", { class: "spinner" }),
+      el("p", {}, "加载数据中..."),
+    ]),
+  );
 }
 
 function refreshList() {
-  const container = document.getElementById('skillList');
+  const container = document.getElementById("skillList");
   if (!container || !skillData?.skills) return;
 
   clearChildren(container);
@@ -131,23 +178,34 @@ function refreshList() {
   const totalCount = Object.keys(skillData.skills).length;
 
   Object.entries(skillData.skills)
-    .sort(([, a], [, b]) => (a.name || '').localeCompare(b.name || ''))
+    .sort(([, a], [, b]) => (a.name || "").localeCompare(b.name || ""))
     .forEach(([id, skill]) => {
-      if (typeof skill === 'object' && skill !== null && matchesFilters(skill, searchText, searchIndex)) {
+      if (
+        typeof skill === "object" &&
+        skill !== null &&
+        matchesFilters(skill, searchText, searchIndex)
+      ) {
         filteredCount++;
-        cards.push(createSkillCard(id, skill, handleCardClick));
+        cards.push(
+          createSkillCard(id, skill, handleCardAction, {
+            activeSkillData,
+            skillAutoData,
+          }),
+        );
       }
     });
 
   // 统计
-  const stats = document.getElementById('statsInfo');
+  const stats = document.getElementById("statsInfo");
   if (stats) stats.textContent = `共 ${filteredCount} / ${totalCount} 项`;
 
   if (cards.length === 0) {
-    container.appendChild(el('div', { class: 'empty-state' }, [
-      el('div', { class: 'empty-state-icon' }, '?'),
-      el('p', {}, '没有匹配的武学'),
-    ]));
+    container.appendChild(
+      el("div", { class: "empty-state" }, [
+        el("div", { class: "empty-state-icon" }, "?"),
+        el("p", {}, "没有匹配的武学"),
+      ]),
+    );
     return;
   }
 
@@ -155,24 +213,53 @@ function refreshList() {
   batchRender(cards, container, 30, 16);
 }
 
-async function handleCardClick(skillId, skill) {
+async function handleCardAction(action, skillId, skill, extra) {
   // 确保附加数据已加载
   if (!activeSkillData) {
     try {
       const [activeZhaoRes, skillAutoRes, bookSkillsRes] = await Promise.all([
-        loadResource('activeZhao').catch(() => null),
-        loadResource('skillAuto').catch(() => null),
-        loadResource('bookSkills').catch(() => null),
+        loadResource("activeZhao").catch(() => null),
+        loadResource("skillAuto").catch(() => null),
+        loadResource("bookSkills").catch(() => null),
       ]);
       activeSkillData = activeZhaoRes;
       skillAutoData = skillAutoRes;
       bookSkillUnlockData = bookSkillsRes;
       buildSearchIndex(skillData, activeSkillData);
+      // 数据加载后重新渲染卡片（让按钮出现）
+      refreshList();
     } catch (e) {
-      console.error('加载附加数据失败:', e);
+      console.error("加载附加数据失败:", e);
     }
   }
-  showSkillDetail(skillId, skill, { activeSkillData, skillAutoData, bookSkillUnlockData });
+
+  const skillName = skill.name || skillId;
+  switch (action) {
+    case "basic":
+      showBasicAttributesModal(skillId, skill);
+      break;
+    case "active":
+      if (extra?.activeId) {
+        showActiveSkillModal(
+          skillName,
+          extra.activeId,
+          activeSkillData,
+          bookSkillUnlockData,
+        );
+      }
+      break;
+    case "allActive":
+      showAllActiveSkillsModal(
+        skillName,
+        skillId,
+        activeSkillData,
+        bookSkillUnlockData,
+      );
+      break;
+    case "passive":
+      showPassiveSkillsModal(skillName, skillId, skillAutoData);
+      break;
+  }
 }
 
-document.addEventListener('DOMContentLoaded', initWuxuePage);
+document.addEventListener("DOMContentLoaded", initWuxuePage);

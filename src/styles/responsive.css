@@ -2,43 +2,101 @@
 
 /* 平板 */
 @media (max-width: 1024px) {
-  .card-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-  .meridian-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+  .meridian-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
 }
 
 /* 手机 */
 @media (max-width: 768px) {
-  :root { --header-h: 56px; }
+  :root {
+    --header-h: 56px;
+  }
 
-  .app-container { padding: calc(var(--header-h) + 16px) 12px 32px; }
+  .app-container {
+    padding: calc(var(--header-h) + 16px) 12px 32px;
+  }
 
   /* 顶部导航简化 */
-  .app-header { padding: 0 12px; gap: 8px; }
-  .header-brand { font-size: 1rem; }
-  .header-nav { gap: 2px; }
-  .nav-link { padding: 6px 10px; font-size: 0.8rem; }
+  .app-header {
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .header-brand {
+    font-size: 1rem;
+  }
+  .header-nav {
+    gap: 2px;
+  }
+  .nav-link {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
 
   /* 主题切换器在移动端折叠为图标 */
-  .theme-switcher { padding: 2px; }
-  .theme-btn { padding: 4px 6px; font-size: 0.7rem; }
+  .theme-switcher {
+    padding: 2px;
+  }
+  .theme-btn {
+    padding: 4px 6px;
+    font-size: 0.7rem;
+  }
 
-  .page-title { font-size: 1.4rem; }
+  .page-title {
+    font-size: 1.4rem;
+  }
 
   /* 卡片网格单列 */
-  .card-grid { grid-template-columns: 1fr; gap: 12px; }
-  .meridian-grid { grid-template-columns: 1fr; gap: 12px; }
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .meridian-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 
   /* 过滤面板紧凑 */
-  .filter-panel { padding: 14px; }
-  .filter-badges { gap: 4px; }
-  .filter-badge { padding: 3px 9px; font-size: 0.75rem; }
+  .filter-panel-header {
+    padding: 12px 14px;
+  }
+  .filter-panel-content {
+    padding: 14px;
+  }
+  .filter-panel-title {
+    font-size: 0.88rem;
+  }
+  .filter-badges {
+    gap: 6px;
+  }
+  .filter-badge {
+    padding: 4px 10px;
+    font-size: 0.76rem;
+  }
+  .filter-toggles {
+    gap: 8px;
+  }
+  .filter-toggle-chip {
+    padding: 5px 12px;
+    font-size: 0.78rem;
+  }
 
   /* 搜索栏 */
-  .search-input { padding: 10px 12px 10px 38px; font-size: 0.9rem; }
-  .search-icon { left: 11px; }
+  .search-input {
+    padding: 8px 12px 8px 36px;
+    font-size: 0.85rem;
+  }
+  .search-icon {
+    left: 11px;
+  }
 
   /* 模态框全屏 */
-  .modal-overlay { padding: 0; }
+  .modal-overlay {
+    padding: 0;
+  }
   .modal-container {
     max-width: 100%;
     max-height: 100vh;
@@ -46,57 +104,151 @@
     height: 100vh;
   }
 
-  .modal-body { padding: 14px; }
+  .modal-body {
+    padding: 14px;
+  }
 
   /* 标签页可滚动 */
-  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .tab { white-space: nowrap; padding: 8px 14px; }
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab {
+    white-space: nowrap;
+    padding: 8px 14px;
+  }
 
   /* 属性列表单列 */
-  .attr-list { grid-template-columns: 1fr; }
+  .attr-list {
+    grid-template-columns: 1fr;
+  }
+
+  /* 卡片操作按钮紧凑 */
+  .skill-action-btn {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+  }
 
   /* 被动技能表格横向滚动 */
-  .passive-table { font-size: 0.75rem; }
-  .passive-table th, .passive-table td { padding: 6px 8px; }
+  .passive-table {
+    font-size: 0.75rem;
+  }
+  .passive-table th,
+  .passive-table td {
+    padding: 6px 8px;
+  }
 
   /* 计算器网格 */
-  .calc-grid { grid-template-columns: 1fr 1fr; }
+  .calc-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 
   /* 隐脉选择栏 */
-  .meridian-selector-bar { flex-direction: column; align-items: stretch; }
-  .dropdown-trigger { width: 100%; }
+  .meridian-selector-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .dropdown-trigger {
+    width: 100%;
+  }
 
   /* Toast 全宽 */
-  .toast-container { right: 12px; left: 12px; }
-  .toast { max-width: 100%; min-width: 0; }
+  .toast-container {
+    right: 12px;
+    left: 12px;
+  }
+  .toast {
+    max-width: 100%;
+    min-width: 0;
+  }
 
   /* JSON 查看器 */
-  .json-viewer { font-size: 0.72rem; padding: 10px; }
+  .json-viewer {
+    font-size: 0.72rem;
+    padding: 10px;
+  }
 
   /* 等级行 */
-  .level-row { flex-direction: column; gap: 4px; }
-  .level-label { min-width: 0; }
+  .level-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .level-label {
+    min-width: 0;
+  }
 
   /* 玄络列表项 */
-  .link-item-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .link-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }
 
 /* 小屏手机 */
 @media (max-width: 480px) {
-  .header-brand { display: none; }
-  .nav-link { padding: 6px 8px; font-size: 0.75rem; }
-  .theme-btn span { display: none; }
+  .header-brand {
+    display: none;
+  }
+  .nav-link {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+  .theme-btn span {
+    display: none;
+  }
   .theme-btn::after {
     content: attr(data-short);
   }
-  .calc-grid { grid-template-columns: 1fr; }
-  .skill-card-body { padding: 12px; }
-  .filter-panel { padding: 12px; }
+  .calc-grid {
+    grid-template-columns: 1fr;
+  }
+  .skill-card-body {
+    padding: 12px;
+  }
+  .filter-panel-header {
+    padding: 10px 12px;
+  }
+  .filter-panel-content {
+    padding: 12px;
+  }
 }
 
 /* 触摸设备优化 */
 @media (hover: none) and (pointer: coarse) {
-  .skill-card:hover { transform: none; }
-  .filter-badge { padding: 6px 14px; }
-  .icon-btn { width: 40px; height: 40px; }
+  .skill-card:hover {
+    transform: none;
+  }
+  .filter-badge {
+    padding: 5px 12px;
+  }
+  .filter-toggle-chip {
+    padding: 6px 14px;
+  }
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* 触摸设备 + 较小屏幕时，保持紧凑布局 */
+@media (hover: none) and (pointer: coarse) and (max-width: 768px) {
+  .filter-badge {
+    padding: 4px 10px;
+    font-size: 0.76rem;
+  }
+  .filter-toggle-chip {
+    padding: 5px 12px;
+    font-size: 0.78rem;
+  }
+  .search-input {
+    padding: 8px 12px 8px 36px;
+    font-size: 0.85rem;
+  }
+  .filter-panel-header {
+    padding: 12px 14px;
+  }
+  .filter-panel-content {
+    padding: 14px;
+  }
 }

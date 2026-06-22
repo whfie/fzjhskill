@@ -1,15 +1,15 @@
-// 武学详情弹窗 - 三标签页：基础属性 / 主动技能 / 被动技能
-import { el, clearChildren } from '../utils/dom.js';
+// 武学详情弹窗 - 拆分为独立弹窗：基础属性 / 单个主动技能 / 被动技能表格
+import { el } from '../utils/dom.js';
 import { Modal } from './Modal.js';
 import {
-  getMethodName, getElementName, getMethodCN, CALC_PARAM_NAMES,
+  getMethodCN,
 } from '../data/mappings.js';
 import { collectConditions, getBookLearnText } from '../data/conditionParser.js';
 import { showEffectDetail } from './EffectDetailModal.js';
 import { parseEffects } from '../utils/format.js';
 
 // 查找关联的主动技能
-function findActiveSkills(skillId, activeSkillData) {
+export function findActiveSkills(skillId, activeSkillData) {
   if (!activeSkillData?.skillRelation) return [];
   const groups = [];
   for (const [activeSkillId, relation] of Object.entries(activeSkillData.skillRelation)) {
@@ -64,7 +64,7 @@ function getPassiveEffectLinks(activeSkillData, activeLevelId) {
 }
 
 // 渲染条件卡片
-function renderConditionCard(label, conditions, variant) {
+function renderConditionCard(label, conditions) {
   if (!conditions.length) return null;
   return el('div', { class: 'condition-card' }, [
     el('div', { class: 'condition-card-title' }, label),
@@ -74,49 +74,8 @@ function renderConditionCard(label, conditions, variant) {
   ]);
 }
 
-export function showSkillDetail(skillId, skill, data) {
-  const { activeSkillData, skillAutoData, bookSkillUnlockData } = data;
-  const modal = new Modal({
-    title: `${skill.name || skillId} - 武学详情`,
-    size: 'lg',
-  });
-  const body = modal.getBody();
-
-  // 标签页
-  const tabs = el('div', { class: 'tabs' }, [
-    el('div', { class: 'tab active', 'data-tab': 'basic' }, '基础属性'),
-    el('div', { class: 'tab', 'data-tab': 'active' }, '主动技能'),
-    el('div', { class: 'tab', 'data-tab': 'passive' }, '被动技能'),
-  ]);
-  body.appendChild(tabs);
-
-  const basicContent = el('div', { class: 'tab-content active', 'data-content': 'basic' });
-  const activeContent = el('div', { class: 'tab-content', 'data-content': 'active' });
-  const passiveContent = el('div', { class: 'tab-content', 'data-content': 'passive' });
-  body.appendChild(basicContent);
-  body.appendChild(activeContent);
-  body.appendChild(passiveContent);
-
-  // 标签切换
-  tabs.addEventListener('click', (e) => {
-    const tab = e.target.closest('.tab');
-    if (!tab) return;
-    tabs.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
-    tab.classList.add('active');
-    body.querySelectorAll('.tab-content').forEach((c) => c.classList.remove('active'));
-    body.querySelector(`[data-content="${tab.dataset.tab}"]`).classList.add('active');
-  });
-
-  // 基础属性 - JSON 展示
-  basicContent.appendChild(el('div', { class: 'json-viewer' }, JSON.stringify(skill, null, 2)));
-
-  // 主动技能
-  renderActiveSkills(activeContent, skillId, activeSkillData, bookSkillUnlockData);
-
-  // 被动技能
-  renderPassiveSkills(passiveContent, skillId, skillAutoData);
-
-  // 效果链接点击
+// 绑定效果链接点击
+function bindEffectLinks(body, activeSkillData) {
   body.addEventListener('click', (e) => {
     const link = e.target.closest('.effect-link');
     if (!link) return;
@@ -130,151 +89,222 @@ export function showSkillDetail(skillId, skill, data) {
     if (costVal != null) defaultParams.cost = parseFloat(costVal) || 0;
     showEffectDetail(effectId, activeSkillData, defaultParams);
   });
+}
 
+// ===== 基础属性弹窗 =====
+export function showBasicAttributesModal(skillId, skill) {
+  const modal = new Modal({
+    title: `${skill.name || skillId} - 基础属性`,
+    size: 'lg',
+  });
+  const body = modal.getBody();
+  body.appendChild(el('div', { class: 'json-viewer' }, JSON.stringify(skill, null, 2)));
   modal.show();
 }
 
-function renderActiveSkills(container, skillId, activeSkillData, bookSkillUnlockData) {
+// ===== 单个主动技能弹窗 =====
+export function showActiveSkillModal(skillName, activeId, activeSkillData, bookSkillUnlockData) {
+  const groups = findActiveSkillsByActiveId(activeId, activeSkillData);
+  const group = groups[0];
+  if (!group) return;
+
+  const { baseActive, allActives } = group;
+  const modal = new Modal({
+    title: `${skillName || baseActive.name || activeId} - 主动技能`,
+    size: 'lg',
+  });
+  const body = modal.getBody();
+
+  const groupEl = renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData);
+  body.appendChild(groupEl);
+
+  bindEffectLinks(body, activeSkillData);
+  modal.show();
+}
+
+// 展示该武学的所有主动技能
+export function showAllActiveSkillsModal(skillName, skillId, activeSkillData, bookSkillUnlockData) {
   const groups = findActiveSkills(skillId, activeSkillData);
-  if (groups.length === 0) {
-    container.appendChild(el('div', { class: 'empty-state' }, [
-      el('div', { class: 'empty-state-icon' }, '—'),
-      el('p', {}, '该武学没有关联的主动技能'),
-    ]));
-    return;
-  }
+  if (groups.length === 0) return;
+
+  const modal = new Modal({
+    title: `${skillName || skillId} - 主动技能`,
+    size: 'lg',
+  });
+  const body = modal.getBody();
 
   groups.forEach((group) => {
-    const { activeId, baseActive, allActives } = group;
-    const groupEl = el('div', { class: 'active-skill-group' });
+    body.appendChild(renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData));
+  });
 
-    // 头部
-    const typeBadge = baseActive.type
-      ? el('span', { class: `badge ${baseActive.type === '释放' ? 'badge-success' : baseActive.type === '攻击' ? 'badge-danger' : 'badge-muted'}` }, `${baseActive.type}类`)
-      : null;
-    const levelNames = { 1: '低级残页', 2: '中级残页', 3: '高级残页', 4: '顶级残页' };
-    const levelBadge = baseActive.level && levelNames[baseActive.level]
-      ? el('span', { class: 'badge badge-info' }, levelNames[baseActive.level])
-      : null;
+  bindEffectLinks(body, activeSkillData);
+  modal.show();
+}
 
-    groupEl.appendChild(el('div', { class: 'active-skill-header' }, [
+// 通过 activeId 查找技能组
+function findActiveSkillsByActiveId(activeId, activeSkillData) {
+  if (!activeSkillData?.ActiveZhao) return [];
+  const baseSkill = activeSkillData.ActiveZhao[activeId];
+  if (!baseSkill) return [];
+  const skills = [];
+  for (let i = 1; i <= 11; i++) {
+    const currentId = i === 1 ? activeId : `${activeId}${i}`;
+    if (activeSkillData.ActiveZhao[currentId]) {
+      skills.push({ id: currentId, level: i, data: activeSkillData.ActiveZhao[currentId] });
+    }
+  }
+  return [{ activeId, baseActive: baseSkill, allActives: skills }];
+}
+
+// 渲染单个主动技能组（复用原逻辑）
+function renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData) {
+  const { activeId, baseActive, allActives } = group;
+  const groupEl = el('div', { class: 'active-skill-group' });
+
+  // 头部
+  const typeBadge = baseActive.type
+    ? el('span', { class: `badge ${baseActive.type === '释放' ? 'badge-success' : baseActive.type === '攻击' ? 'badge-danger' : 'badge-muted'}` }, `${baseActive.type}类`)
+    : null;
+  const levelNames = { 1: '低级残页', 2: '中级残页', 3: '高级残页', 4: '顶级残页' };
+  const levelBadge = baseActive.level && levelNames[baseActive.level]
+    ? el('span', { class: 'badge badge-info' }, levelNames[baseActive.level])
+    : null;
+
+  const header = el('div', { class: 'active-skill-header' }, [
+    el('div', { class: 'header-left' }, [
       el('span', { class: 'active-skill-name' }, baseActive.name || activeId),
       ...(typeBadge ? [typeBadge] : []),
       ...(levelBadge ? [levelBadge] : []),
+    ]),
+    el('button', {
+      class: 'expand-base-btn',
+      'data-active-id': activeId,
+      onclick: (e) => {
+        const btn = e.currentTarget;
+        const pre = groupEl.querySelector(`.base-data-${activeId}`);
+        const expanded = btn.dataset.expanded === 'true';
+        pre.style.display = expanded ? 'none' : 'block';
+        btn.dataset.expanded = !expanded;
+        btn.textContent = expanded ? '原始数据 ▾' : '原始数据 ▴';
+      },
+    }, '原始数据 ▾'),
+  ]);
+  groupEl.appendChild(header);
+
+  // 原始数据块
+  const baseDataPre = document.createElement('pre');
+  baseDataPre.className = `base-data-pre base-data-${activeId}`;
+  baseDataPre.textContent = JSON.stringify(baseActive, null, 2);
+  baseDataPre.style.display = 'none';
+  groupEl.appendChild(baseDataPre);
+
+  if (allActives.length > 1) {
+    const firstData = allActives[0].data;
+
+    // 学习条件
+    const learnConditions = collectConditions('learn', firstData);
+    const bookText = getBookLearnText(activeId, activeSkillData, bookSkillUnlockData);
+    if (bookText) learnConditions.unshift(bookText);
+    const learnCard = renderConditionCard('学习条件', learnConditions);
+    if (learnCard) groupEl.appendChild(learnCard);
+
+    // 使用条件
+    const useConditions = collectConditions('use', firstData);
+    if (baseActive.methods != null) {
+      const methodName = getMethodCN(Number(baseActive.methods));
+      if (methodName) useConditions.push(`准备在【${methodName}】位置`);
+    }
+    const useCard = renderConditionCard('使用条件', useConditions);
+    if (useCard) groupEl.appendChild(useCard);
+
+    // 各重数差异
+    const levelSection = el('div', { class: 'level-diff-section' });
+    levelSection.appendChild(el('div', { class: 'level-diff-header' }, [
+      el('span', { class: 'text-sm', style: { fontWeight: '600', color: 'var(--text-secondary)' } }, '各重数差异'),
+      el('span', {
+        class: 'level-diff-toggle',
+        onclick: (e) => {
+          const expanded = e.target.dataset.expanded === 'true';
+          levelSection.querySelectorAll('.level-row').forEach((row) => {
+            const level = parseInt(row.dataset.level);
+            if (level <= 8) row.style.display = expanded ? 'none' : 'flex';
+          });
+          e.target.dataset.expanded = !expanded;
+          e.target.textContent = expanded ? '展开 ▾' : '收起 ▴';
+        },
+      }, '展开 ▾'),
     ]));
 
-    if (allActives.length > 1) {
-      const firstData = allActives[0].data;
+    allActives.forEach((skill, index) => {
+      if (index > 9) return;
+      const parts = [];
+      const fieldLabel = { desc: '描述', pvpcd: 'PVP冷却', cost: '内力消耗' };
+      Object.entries(skill.data)
+        .filter(([key]) => ['desc', 'pvpcd', 'cost', 'effects'].includes(key))
+        .forEach(([key, value]) => {
+          if (key === 'effects') {
+            parts.push(el('div', {}, [
+              el('span', { class: 'text-muted text-xs' }, '主动效果 '),
+              el('span', { html: createEffectLinksHtml(value, skill.data.cost) }),
+            ]));
+            const enterLinks = getEnterEffectLinks(activeSkillData, skill.id);
+            const passiveLinks = getPassiveEffectLinks(activeSkillData, skill.id);
+            if (enterLinks) parts.push(el('div', {}, [el('span', { class: 'text-muted text-xs' }, '入场效果 '), el('span', { html: enterLinks })]));
+            if (passiveLinks) parts.push(el('div', {}, [el('span', { class: 'text-muted text-xs' }, '被动效果 '), el('span', { html: passiveLinks })]));
+          } else {
+            parts.push(el('div', {}, [el('span', { class: 'text-muted text-xs' }, `${fieldLabel[key] || key} `), String(value)]));
+          }
+        });
 
-      // 学习条件
-      const learnConditions = collectConditions('learn', firstData);
-      const bookText = getBookLearnText(activeId, activeSkillData, bookSkillUnlockData);
-      if (bookText) learnConditions.unshift(bookText);
-      const learnCard = renderConditionCard('学习条件', learnConditions);
-      if (learnCard) groupEl.appendChild(learnCard);
-
-      // 使用条件
-      const useConditions = collectConditions('use', firstData);
-      if (baseActive.methods != null) {
-        const methodName = getMethodCN(Number(baseActive.methods));
-        if (methodName) useConditions.push(`准备在【${methodName}】位置`);
-      }
-      const useCard = renderConditionCard('使用条件', useConditions);
-      if (useCard) groupEl.appendChild(useCard);
-
-      // 各重数差异
-      const levelSection = el('div', { class: 'level-diff-section' });
-      levelSection.appendChild(el('div', { class: 'level-diff-header' }, [
-        el('span', { class: 'text-sm', style: { fontWeight: '600', color: 'var(--text-secondary)' } }, '各重数差异'),
-        el('span', {
-          class: 'level-diff-toggle',
-          onclick: (e) => {
-            const expanded = e.target.dataset.expanded === 'true';
-            levelSection.querySelectorAll('.level-row').forEach((row) => {
-              const level = parseInt(row.dataset.level);
-              if (level <= 8) row.style.display = expanded ? 'none' : 'flex';
-            });
-            e.target.dataset.expanded = !expanded;
-            e.target.textContent = expanded ? '展开 ▾' : '收起 ▴';
-          },
-        }, '展开 ▾'),
+      const isHidden = index < 8;
+      levelSection.appendChild(el('div', {
+        class: 'level-row',
+        'data-level': index + 1,
+        style: { display: isHidden ? 'none' : 'flex' },
+      }, [
+        el('span', { class: 'level-label' }, `第${skill.level}重`),
+        el('div', { class: 'level-content' }, parts),
       ]));
+    });
 
-      allActives.forEach((skill, index) => {
-        if (index > 9) return;
-        const parts = [];
-        const fieldLabel = { desc: '描述', pvpcd: 'PVP冷却', cost: '内力消耗' };
-        Object.entries(skill.data)
-          .filter(([key]) => ['desc', 'pvpcd', 'cost', 'effects'].includes(key))
-          .forEach(([key, value]) => {
-            if (key === 'effects') {
-              parts.push(el('div', {}, [
-                el('span', { class: 'text-muted text-xs' }, '主动效果 '),
-                el('span', { html: createEffectLinksHtml(value, skill.data.cost) }),
-              ]));
-              const enterLinks = getEnterEffectLinks(activeSkillData, skill.id);
-              const passiveLinks = getPassiveEffectLinks(activeSkillData, skill.id);
-              if (enterLinks) parts.push(el('div', {}, [el('span', { class: 'text-muted text-xs' }, '入场效果 '), el('span', { html: enterLinks })]));
-              if (passiveLinks) parts.push(el('div', {}, [el('span', { class: 'text-muted text-xs' }, '被动效果 '), el('span', { html: passiveLinks })]));
-            } else {
-              parts.push(el('div', {}, [el('span', { class: 'text-muted text-xs' }, `${fieldLabel[key] || key} `), String(value)]));
-            }
-          });
+    groupEl.appendChild(levelSection);
+  }
 
-        const isHidden = index < 8;
-        levelSection.appendChild(el('div', {
-          class: 'level-row',
-          'data-level': index + 1,
-          style: { display: isHidden ? 'none' : 'flex' },
-        }, [
-          el('span', { class: 'level-label' }, `第${skill.level}重`),
-          el('div', { class: 'level-content' }, parts),
-        ]));
-      });
-
-      groupEl.appendChild(levelSection);
-    }
-
-    container.appendChild(groupEl);
-  });
+  return groupEl;
 }
 
-function renderPassiveSkills(container, skillId, skillAutoData) {
+// ===== 被动技能弹窗 =====
+export function showPassiveSkillsModal(skillName, skillId, skillAutoData) {
   const passiveSkills = skillAutoData?.[skillId];
+  const modal = new Modal({
+    title: `${skillName || skillId} - 被动招式`,
+    size: 'lg',
+  });
+  const body = modal.getBody();
+
   if (!passiveSkills) {
-    container.appendChild(el('div', { class: 'empty-state' }, [
+    body.appendChild(el('div', { class: 'empty-state' }, [
       el('div', { class: 'empty-state-icon' }, '—'),
       el('p', {}, '该武学没有关联的被动技能'),
     ]));
+    modal.show();
     return;
   }
 
   const skills = Object.values(passiveSkills);
-  let totalAtk = 0, totalDam = 0, totalHitRate = 0, totalDuration = 0;
-  skills.forEach((s) => {
-    totalAtk += s.atk || 0;
-    totalDam += s.dam || 0;
-    totalHitRate += s.hitRate || 0;
-    totalDuration += (s.preDuration || 0) + (s.aftDuration || 0);
-  });
-  const count = skills.length;
-  const avg = (v) => (count > 0 ? (v / count).toFixed(2) : '0');
 
-  // 平均值
-  container.appendChild(el('div', { class: 'mb-4' }, [
-    el('h5', { class: 'mb-2' }, '技能基础数据'),
-    el('p', { class: 'text-sm' }, `招式平均攻击系数: ${avg(totalAtk)}`),
-    el('p', { class: 'text-sm' }, `招式平均前后摇: ${avg(totalDuration)}`),
-    el('p', { class: 'text-sm' }, `招式平均伤害力: ${avg(totalDam)}`),
-    el('p', { class: 'text-sm' }, `招式平均命中率: ${avg(totalHitRate)}`),
-  ]));
-
-  // 表格
+  // 表格（与主动技能风格统一）
+  const tableWrap = el('div', { class: 'passive-table-wrap' });
   const table = el('table', { class: 'passive-table' });
   table.appendChild(el('thead', {}, [el('tr', {}, [
-    el('th', {}, '技能效果'), el('th', {}, '描述'), el('th', {}, '攻击系数'),
-    el('th', {}, '伤害力'), el('th', {}, '命中率'), el('th', {}, '前后摇'),
-    el('th', {}, '伤害类型'), el('th', {}, '解锁等级'),
+    el('th', {}, '技能效果'),
+    el('th', {}, '描述'),
+    el('th', {}, '攻击系数'),
+    el('th', {}, '伤害力'),
+    el('th', {}, '命中率'),
+    el('th', {}, '前后摇'),
+    el('th', {}, '伤害类型'),
+    el('th', {}, '解锁等级'),
   ])]));
 
   const tbody = el('tbody', {});
@@ -291,5 +321,31 @@ function renderPassiveSkills(container, skillId, skillAutoData) {
     ]));
   });
   table.appendChild(tbody);
-  container.appendChild(table);
+  tableWrap.appendChild(table);
+  body.appendChild(tableWrap);
+
+  modal.show();
+}
+
+// ===== 计算被动技能基础数据（供卡片展示） =====
+export function getPassiveStats(skillId, skillAutoData) {
+  const passiveSkills = skillAutoData?.[skillId];
+  if (!passiveSkills) return null;
+  const skills = Object.values(passiveSkills);
+  let totalAtk = 0, totalDam = 0, totalHitRate = 0, totalDuration = 0;
+  skills.forEach((s) => {
+    totalAtk += s.atk || 0;
+    totalDam += s.dam || 0;
+    totalHitRate += s.hitRate || 0;
+    totalDuration += (s.preDuration || 0) + (s.aftDuration || 0);
+  });
+  const count = skills.length;
+  const avg = (v) => (count > 0 ? (v / count).toFixed(2) : '0.00');
+  return {
+    count,
+    avgAtk: avg(totalAtk),
+    avgDam: avg(totalDam),
+    avgHitRate: avg(totalHitRate),
+    avgDuration: avg(totalDuration),
+  };
 }
