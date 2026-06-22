@@ -1,37 +1,55 @@
 // 数据加载器 - gzip 解码 + IndexedDB 缓存 + 多源回退
-import { cacheGet, cacheSet, cacheClearAll, clearBrowserCacheStorage } from './cacheManager.js';
+import {
+  cacheGet,
+  cacheSet,
+  cacheClearAll,
+  clearBrowserCacheStorage,
+} from "./cacheManager.js";
 
-// 数据源：本地优先，CDN 回退（原项目 data 路径）
+// 数据源：本地优先（使用 Vite BASE_URL 适配部署子路径），CDN 回退（原项目 data 路径）
+const BASE_URL = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
 const DATA_SOURCES = [
-  (path) => `data/${path}`,
+  (path) => `${BASE_URL}/data/${path}`,
   (path) => `https://cdn.jsdelivr.net/gh/buzhidao32/wuxue@main/data/${path}`,
   (path) => `https://buzhidao32.github.io/wuxue/data/${path}`,
 ];
 
 // 资源定义
 const RESOURCES = {
-  skill: { file: 'skill.json.gz', cacheKey: 'skill.json' },
-  activeZhao: { file: 'activeZhao.json.gz', cacheKey: 'activeZhao.json' },
-  skillAuto: { file: 'skillAuto.json.gz', cacheKey: 'skillAuto.json' },
-  bookSkills: { file: 'bookSkills.json.gz', cacheKey: 'bookSkills.json' },
-  meridianMapConfig: { file: 'MeridianMapConfig.json.gz', cacheKey: 'MeridianMapConfig.json' },
-  acupointConfig: { file: 'AcupointConfig.json.gz', cacheKey: 'AcupointConfig.json' },
-  meridianLinkConfig: { file: 'MeridianLinkConfig.json.gz', cacheKey: 'MeridianLinkConfig.json' },
-  unlockCondition: { file: 'unlockConditionConfig.json.gz', cacheKey: 'unlockConditionConfig.json' },
+  skill: { file: "skill.json.gz", cacheKey: "skill.json" },
+  activeZhao: { file: "activeZhao.json.gz", cacheKey: "activeZhao.json" },
+  skillAuto: { file: "skillAuto.json.gz", cacheKey: "skillAuto.json" },
+  bookSkills: { file: "bookSkills.json.gz", cacheKey: "bookSkills.json" },
+  meridianMapConfig: {
+    file: "MeridianMapConfig.json.gz",
+    cacheKey: "MeridianMapConfig.json",
+  },
+  acupointConfig: {
+    file: "AcupointConfig.json.gz",
+    cacheKey: "AcupointConfig.json",
+  },
+  meridianLinkConfig: {
+    file: "MeridianLinkConfig.json.gz",
+    cacheKey: "MeridianLinkConfig.json",
+  },
+  unlockCondition: {
+    file: "unlockConditionConfig.json.gz",
+    cacheKey: "unlockConditionConfig.json",
+  },
 };
 
-const VERSION_FILE = 'version.json';
+const VERSION_FILE = "version.json";
 const inflight = new Map();
 const memoryData = new Map();
 
 // gzip 解码
 async function decodeGzip(response) {
-  if (typeof DecompressionStream === 'undefined') {
+  if (typeof DecompressionStream === "undefined") {
     // 回退：不支持 DecompressionStream 时尝试 pako 或直接 json
     const text = await response.text();
     return JSON.parse(text);
   }
-  const stream = response.body.pipeThrough(new DecompressionStream('gzip'));
+  const stream = response.body.pipeThrough(new DecompressionStream("gzip"));
   const reader = stream.getReader();
   const chunks = [];
   let totalLen = 0;
@@ -47,14 +65,14 @@ async function decodeGzip(response) {
     merged.set(chunk, offset);
     offset += chunk.length;
   }
-  return JSON.parse(new TextDecoder('utf-8').decode(merged));
+  return JSON.parse(new TextDecoder("utf-8").decode(merged));
 }
 
 // 从单个 URL 拉取并解码
 async function fetchFromUrl(url) {
-  const resp = await fetch(url, { cache: 'no-store' });
+  const resp = await fetch(url, { cache: "no-store" });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${url}`);
-  if (url.endsWith('.gz')) {
+  if (url.endsWith(".gz")) {
     return await decodeGzip(resp);
   }
   return await resp.json();
@@ -71,8 +89,8 @@ async function fetchWithFallback(file) {
       lastErr = e;
     }
     // .gz 失败时尝试非 .gz 格式（仅远程源）
-    if (url.endsWith('.gz')) {
-      const plainUrl = src(file.replace(/\.gz$/, ''));
+    if (url.endsWith(".gz")) {
+      const plainUrl = src(file.replace(/\.gz$/, ""));
       if (plainUrl !== url) {
         try {
           return { data: await fetchFromUrl(plainUrl), url: plainUrl };
@@ -95,11 +113,11 @@ function singleFlight(key, factory) {
 
 // 加载版本信息
 export async function loadVersion() {
-  return singleFlight('version', async () => {
-    const cached = await cacheGet('version.json');
+  return singleFlight("version", async () => {
+    const cached = await cacheGet("version.json");
     try {
       const { data } = await fetchWithFallback(VERSION_FILE);
-      await cacheSet('version.json', data);
+      await cacheSet("version.json", data);
       return data;
     } catch {
       return cached || null;
@@ -134,7 +152,7 @@ export async function loadResource(resourceId) {
 // 批量加载
 export async function loadResources(ids) {
   const entries = await Promise.all(
-    ids.map(async (id) => [id, await loadResource(id)])
+    ids.map(async (id) => [id, await loadResource(id)]),
   );
   return Object.fromEntries(entries);
 }
@@ -151,12 +169,12 @@ export async function clearCacheAndRefresh() {
   await clearBrowserCacheStorage();
   // 清除 URL 查询参数中的缓存标记并刷新
   const url = new URL(window.location.href);
-  url.searchParams.set('_refresh', Date.now().toString());
+  url.searchParams.set("_refresh", Date.now().toString());
   window.location.replace(url.toString());
 }
 
 // 获取数据版本日期
 export async function getDataVersion() {
   const v = await loadVersion();
-  return v?.version || '';
+  return v?.version || "";
 }
