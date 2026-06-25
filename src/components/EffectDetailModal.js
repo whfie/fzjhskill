@@ -179,9 +179,11 @@ export function showEffectDetail(effectId, activeSkillData, defaultParams = {}) 
         try {
           const argNames = Object.keys(values);
           const argVals = Object.values(values);
-          const funcBody = `'use strict';const math=Math,min=Math.min,max=Math.max,abs=Math.abs,floor=Math.floor,ceil=Math.ceil;${f.jsScript}`;
+          // BLOCKED_GLOBALS 用作参数名，传入 undefined 以阴影公式可能引用的全局对象
+          // 注意：'eval' 出现在参数名中，因此不能与严格模式同时启用（严格模式禁止 eval 作标识符）
+          const funcBody = `const math=Math,min=Math.min,max=Math.max,abs=Math.abs,floor=Math.floor,ceil=Math.ceil;${f.jsScript}`;
           const func = new Function(...BLOCKED_GLOBALS, ...argNames, funcBody);
-          let res = func.call(undefined, ...BLOCKED_GLOBALS.map(() => undefined), ...argVals);
+          let res = func(...BLOCKED_GLOBALS.map(() => undefined), ...argVals);
           if (typeof res === 'number') res = parseFloat(res.toFixed(4));
           allResults[f.key] = res;
         } catch {
@@ -197,9 +199,9 @@ export function showEffectDetail(effectId, activeSkillData, defaultParams = {}) 
           Object.keys(defaultParams).forEach((k) => { if (/^z\d+$/.test(k)) durValues[k] = defaultParams[k]; });
           const argNames = Object.keys(durValues);
           const argVals = Object.values(durValues);
-          const funcBody = `'use strict';const math=Math,min=Math.min,max=Math.max,abs=Math.abs,floor=Math.floor,ceil=Math.ceil;${parseScriptToJS(String(effectData.duration))}`;
+          const funcBody = `const math=Math,min=Math.min,max=Math.max,abs=Math.abs,floor=Math.floor,ceil=Math.ceil;${parseScriptToJS(String(effectData.duration))}`;
           const func = new Function(...BLOCKED_GLOBALS, ...argNames, funcBody);
-          const durResult = func.call(undefined, ...BLOCKED_GLOBALS.map(() => undefined), ...argVals);
+          const durResult = func(...BLOCKED_GLOBALS.map(() => undefined), ...argVals);
           if (typeof durResult === 'number' && durResult > 0) durationT = durResult;
         } catch {}
       }
