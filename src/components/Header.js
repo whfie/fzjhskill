@@ -16,7 +16,6 @@ export async function initHeader(currentPage = "") {
   const version = await getDataVersion().catch(() => "");
 
   const header = el("header", { class: "app-header" }, [
-    el("div", { class: "header-brand" }, "武学隐脉查询"),
     el("nav", { class: "header-nav" }, [
       el(
         "a",

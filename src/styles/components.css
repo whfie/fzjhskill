@@ -480,54 +480,58 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
+  align-items: stretch;
 }
 
 .skill-card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: pointer;
-  transition: all var(--transition);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
   display: flex;
   flex-direction: column;
+  position: relative;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 2px 8px rgba(92, 83, 67, 0.06);
 }
 
 .skill-card:hover {
   border-color: var(--accent);
-  box-shadow: var(--shadow-md);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 8px 24px rgba(92, 83, 67, 0.12),
+    0 16px 48px rgba(92, 83, 67, 0.08);
   transform: translateY(-2px);
 }
 
 .skill-card-header {
-  padding: 12px 16px;
+  padding: 14px 16px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-light);
   display: flex;
-  flex-direction: column;
-  gap: 0;
+  align-items: center;
   cursor: pointer;
   user-select: none;
-  transition:
-    background 0.2s ease,
-    gap 0.3s ease;
+  transition: background 0.2s ease;
 }
 
 .skill-card-header:hover {
   background: var(--bg-hover);
 }
 
-/* 展开时增加行间距，为按钮栏腾出空间 */
-.skill-card-header.is-expanded {
-  gap: 8px;
-}
-
-/* 标题行：武学名称 + 徽章 */
+/* 标题行：标题文字 + [展开按钮 + 徽章] 右对齐 + 展开指示器 */
 .header-main-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
+  width: 100%;
+  overflow: hidden;
 }
 
 .skill-card-title {
@@ -535,10 +539,21 @@
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 45%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 右侧组：展开按钮 + 徽章，整体靠右对齐 */
+.header-right-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .skill-card-badges {
@@ -547,29 +562,50 @@
   flex-shrink: 0;
 }
 
-/* 展开按钮栏：默认隐藏，点击标题栏时左对齐淡入上移 */
+/* 展开指示器（CSS 三角形，点击展开时旋转 180°） */
+.header-chevron {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--text-muted);
+  transition:
+    transform 0.3s ease,
+    border-top-color 0.3s ease;
+  flex-shrink: 0;
+}
+
+.skill-card-header:hover .header-chevron {
+  border-top-color: var(--accent);
+}
+
+.skill-card-header.is-expanded .header-chevron {
+  transform: rotate(180deg);
+}
+
+/* 展开按钮栏：从左滑入标题右侧，同步淡入 */
 .header-toggle-bar {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
   gap: 8px;
-  padding-left: 0;
   opacity: 0;
-  transform: translateY(6px);
-  max-height: 0;
-  overflow: hidden;
+  transform: translateX(-16px);
   pointer-events: none;
+  max-width: 0;
+  overflow: hidden;
   transition:
-    opacity 0.4s ease,
-    transform 0.4s ease,
-    max-height 0.4s ease;
+    opacity 0.3s ease,
+    transform 0.3s ease,
+    max-width 0.3s ease;
+  will-change: opacity, transform, max-width;
+  flex-shrink: 0;
 }
 
 .skill-card-header.is-expanded .header-toggle-bar {
   opacity: 1;
-  transform: translateY(0);
-  max-height: 40px;
+  transform: translateX(0);
   pointer-events: auto;
+  max-width: 240px;
 }
 
 /* 缩小后的操作按钮（约为原尺寸的 75%） */
@@ -580,26 +616,40 @@
 }
 
 .skill-card-body {
-  padding: 14px 16px;
+  padding: 16px;
   flex: 1;
 }
 
 .skill-desc {
   font-size: 0.82rem;
   color: var(--text-muted);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.5;
+  line-height: 1.6;
+  max-height: 3.2em;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.skill-desc:hover {
+  color: var(--text-secondary);
+}
+
+.skill-desc.expanded {
+  -webkit-line-clamp: unset;
+  max-height: none;
 }
 
 .skill-meta-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
   font-size: 0.8rem;
 }
 
@@ -617,17 +667,27 @@
   min-width: 0;
 }
 
+/* 招架属性徽章（蓝色系，与伤害属性紫色区分） */
+.badge-parry {
+  background: var(--info-light);
+  color: var(--info);
+}
+
 .attr-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px 12px;
+  gap: 2px 12px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
 }
 
 .attr-item {
   display: flex;
   justify-content: space-between;
-  font-size: 0.78rem;
-  padding: 2px 0;
+  font-size: 0.76rem;
+  padding: 3px 0;
 }
 
 .attr-label {
@@ -638,7 +698,7 @@
   font-weight: 500;
 }
 
-/* 伤害/招架属性标签（紫色系，独立于门派/类型/知识/绝学/装备） */
+/* 伤害属性标签（紫色系） */
 .badge-element {
   background: var(--element-light);
   color: var(--element);
@@ -646,9 +706,9 @@
 
 /* ===== 主动技能操作区 ===== */
 .skill-card-actions {
-  margin-top: 12px;
+  margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid var(--border-light);
+  border-top: 1px dashed var(--border-light);
 }
 
 /* 主动技能按钮行 */
@@ -693,13 +753,13 @@
 }
 
 .skill-action-btn-secondary {
-  color: var(--text-muted);
-  background: var(--bg-hover);
+  color: var(--info);
+  background: var(--info-light);
 }
 
 .skill-action-btn-secondary:hover {
-  color: var(--accent);
-  background: var(--accent-light);
+  background: var(--info);
+  color: #fff;
 }
 
 /* ===== 模态框 ===== */

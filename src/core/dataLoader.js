@@ -3,16 +3,13 @@ import {
   cacheGet,
   cacheSet,
   cacheClearAll,
+  cacheCleanOtherVersions,
   clearBrowserCacheStorage,
 } from "./cacheManager.js";
 
-// 数据源：本地优先（使用 Vite BASE_URL 适配部署子路径），CDN 回退（原项目 data 路径）
+// 数据源：仅本地（使用 Vite BASE_URL 适配部署子路径）
 const BASE_URL = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
-const DATA_SOURCES = [
-  (path) => `${BASE_URL}/data/${path}`,
-  (path) => `https://cdn.jsdelivr.net/gh/buzhidao32/wuxue@main/data/${path}`,
-  (path) => `https://buzhidao32.github.io/wuxue/data/${path}`,
-];
+const DATA_SOURCES = [(path) => `${BASE_URL}/data/${path}`];
 
 // 资源定义
 const RESOURCES = {
@@ -39,38 +36,76 @@ const RESOURCES = {
 };
 
 const VERSION_FILE = "version.json";
+const FETCH_TIMEOUT_MS = 15_000;
 const inflight = new Map();
 const memoryData = new Map();
+let currentVersion = null;
 
-// gzip 解码
+// 版本号安全包装：确保 key 跟随版本，避免新旧数据混杂
+function versionedKey(key) {
+  return currentVersion ? `${key}__v__${currentVersion}` : key;
+}
+
+// 带超时的 fetch
+function fetchWithTimeout(url, opts = {}) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`请求超时(${FETCH_TIMEOUT_MS}ms): ${url}`));
+    }, FETCH_TIMEOUT_MS);
+    fetch(url, opts)
+      .then((resp) => {
+        clearTimeout(timer);
+        resolve(resp);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
+// gzip 解码：检测 magic number，若响应数据已被服务器解压则直接走 JSON 解析
 async function decodeGzip(response) {
-  if (typeof DecompressionStream === "undefined") {
-    // 回退：不支持 DecompressionStream 时尝试 pako 或直接 json
-    const text = await response.text();
-    return JSON.parse(text);
+  // 克隆一次响应，先检测前两字节是否为 gzip magic (0x1f, 0x8b)
+  try {
+    const cloned = response.clone();
+    const ab = await cloned.arrayBuffer();
+    const view = new Uint8Array(ab);
+    const isGzip = view.length >= 2 && view[0] === 0x1f && view[1] === 0x8b;
+    if (!isGzip) {
+      // 服务器已自动解压，直接解析文本 JSON
+      return JSON.parse(new TextDecoder("utf-8").decode(view));
+    }
+    if (typeof DecompressionStream === "undefined") {
+      return JSON.parse(new TextDecoder("utf-8").decode(view));
+    }
+    const stream = response.body.pipeThrough(new DecompressionStream("gzip"));
+    const reader = stream.getReader();
+    const chunks = [];
+    let totalLen = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      totalLen += value.length;
+    }
+    const merged = new Uint8Array(totalLen);
+    let offset = 0;
+    for (const chunk of chunks) {
+      merged.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return JSON.parse(new TextDecoder("utf-8").decode(merged));
+  } catch (err) {
+    // body 可能已被 pipeThrough 消费，无法再次读取；
+    // 直接抛出，由外层 fetchWithFallback 的 .gz → .json 回退兜底
+    throw err;
   }
-  const stream = response.body.pipeThrough(new DecompressionStream("gzip"));
-  const reader = stream.getReader();
-  const chunks = [];
-  let totalLen = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    totalLen += value.length;
-  }
-  const merged = new Uint8Array(totalLen);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return JSON.parse(new TextDecoder("utf-8").decode(merged));
 }
 
 // 从单个 URL 拉取并解码
 async function fetchFromUrl(url) {
-  const resp = await fetch(url, { cache: "no-store" });
+  const resp = await fetchWithTimeout(url, { cache: "no-store" });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${url}`);
   if (url.endsWith(".gz")) {
     return await decodeGzip(resp);
@@ -114,37 +149,47 @@ function singleFlight(key, factory) {
 // 加载版本信息
 export async function loadVersion() {
   return singleFlight("version", async () => {
-    const cached = await cacheGet("version.json");
+    const cached = await cacheGet(versionedKey("version.json"));
     try {
       const { data } = await fetchWithFallback(VERSION_FILE);
-      await cacheSet("version.json", data);
+      const v = data?.version;
+      if (v && v !== currentVersion) {
+        currentVersion = v;
+        // 版本变化：异步清理旧版本缓存键，不阻塞主流程
+        cacheCleanOtherVersions(v);
+      } else if (v) {
+        currentVersion = v;
+      }
+      await cacheSet(versionedKey("version.json"), data);
       return data;
     } catch {
+      if (cached?.version) currentVersion = cached.version;
       return cached || null;
     }
   });
 }
 
-// 加载资源（带缓存）
+// 加载资源（带缓存），使用版本号绑定的 cacheKey
 export async function loadResource(resourceId) {
   const def = RESOURCES[resourceId];
   if (!def) throw new Error(`未知资源: ${resourceId}`);
 
-  // 内存缓存
-  if (memoryData.has(resourceId)) return memoryData.get(resourceId);
+  // 内存缓存（按版本号隔离）
+  const memKey = versionedKey(resourceId);
+  if (memoryData.has(memKey)) return memoryData.get(memKey);
 
   return singleFlight(resourceId, async () => {
     // IndexedDB 缓存
-    const cached = await cacheGet(def.cacheKey);
+    const cached = await cacheGet(versionedKey(def.cacheKey));
     if (cached) {
-      memoryData.set(resourceId, cached);
+      memoryData.set(memKey, cached);
       return cached;
     }
 
     // 网络拉取
     const { data } = await fetchWithFallback(def.file);
-    await cacheSet(def.cacheKey, data);
-    memoryData.set(resourceId, data);
+    await cacheSet(versionedKey(def.cacheKey), data);
+    memoryData.set(memKey, data);
     return data;
   });
 }

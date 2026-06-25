@@ -39,23 +39,45 @@ export function clearChildren(node) {
   while (node.firstChild) node.removeChild(node.firstChild);
 }
 
-// 批量渲染：分批插入 DOM 避免长时间阻塞
+// 批量渲染：分批插入 DOM 避免长时间阻塞，返回带 abort 方法的 Promise
 export function batchRender(items, container, batchSize = 30, delay = 16) {
   let index = 0;
-  return new Promise((resolve) => {
+  let timer = null;
+  let cancelled = false;
+  let resolved = false;
+  let resolveFn = null;
+
+  const promise = new Promise((resolve) => {
+    resolveFn = resolve;
     function renderBatch() {
+      if (cancelled) return;
       const end = Math.min(index + batchSize, items.length);
       const frag = document.createDocumentFragment();
       for (; index < end; index++) {
+        if (cancelled) return;
         frag.appendChild(items[index]);
       }
-      container.appendChild(frag);
-      if (index < items.length) {
-        setTimeout(renderBatch, delay);
-      } else {
+      if (!cancelled) container.appendChild(frag);
+      if (index < items.length && !cancelled) {
+        timer = setTimeout(renderBatch, delay);
+      } else if (!resolved) {
+        resolved = true;
         resolve();
       }
     }
     renderBatch();
   });
+
+  promise.abort = () => {
+    cancelled = true;
+    if (timer !== null) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    if (!resolved && resolveFn) {
+      resolved = true;
+      resolveFn();
+    }
+  };
+  return promise;
 }

@@ -1,6 +1,9 @@
 // 可复用模态框组件
 import { el, clearChildren } from '../utils/dom.js';
 
+// 模态框栈：跟踪当前打开的模态框数量，确保嵌套关闭时仅当栈空才恢复背景滚动
+const modalStack = [];
+
 export class Modal {
   constructor(options = {}) {
     this.options = {
@@ -88,6 +91,7 @@ export class Modal {
 
   show() {
     document.body.appendChild(this.overlay);
+    modalStack.push(this);
     document.body.style.overflow = 'hidden';
     document.addEventListener('keydown', this._onKey);
     return this;
@@ -97,7 +101,12 @@ export class Modal {
     if (this.overlay.parentNode) {
       this.overlay.remove();
     }
-    document.body.style.overflow = '';
+    const idx = modalStack.indexOf(this);
+    if (idx !== -1) modalStack.splice(idx, 1);
+    // 仅当没有其他模态框打开时才恢复背景滚动
+    if (modalStack.length === 0) {
+      document.body.style.overflow = '';
+    }
     document.removeEventListener('keydown', this._onKey);
     if (this.options.onClose) this.options.onClose();
   }

@@ -57,20 +57,21 @@ export function createSkillCard(id, skill, onAction, data) {
     ),
   );
 
-  // 标题行（main row）+ 展开按钮行（toggle bar）
+  // 标题行：标题文字 + [展开按钮（从左滑入） + 徽章] 整体右对齐 + 指示器
   const headerMain = el("div", { class: "header-main-row" }, [
     el(
       "span",
       { class: "skill-card-title", title: skill.name || id },
       skill.name || id,
     ),
-    el("div", { class: "skill-card-badges" }, headerBadges),
+    el("div", { class: "header-right-group" }, [
+      toggleBar,
+      el("div", { class: "skill-card-badges" }, headerBadges),
+    ]),
+    el("span", { class: "header-chevron" }),
   ]);
 
-  const header = el("div", { class: "skill-card-header" }, [
-    headerMain,
-    toggleBar,
-  ]);
+  const header = el("div", { class: "skill-card-header" }, [headerMain]);
 
   header.addEventListener("click", () => {
     header.classList.toggle("is-expanded");
@@ -88,41 +89,28 @@ export function createSkillCard(id, skill, onAction, data) {
     onAction("allActive", id, skill);
   });
 
-  // 描述
+  // 描述（点击展开/收起全文，独立点击热区，不触发弹窗）
   if (skill.dsc) {
-    body.appendChild(
-      el("p", { class: "skill-desc" }, skill.dsc.replace(/HIW|NOR/g, "")),
+    const desc = el(
+      "p",
+      { class: "skill-desc" },
+      skill.dsc.replace(/HIW|NOR/g, ""),
     );
+    desc.addEventListener("click", (e) => {
+      e.stopPropagation();
+      desc.classList.toggle("expanded");
+    });
+    body.appendChild(desc);
   }
 
-  // 门派 + 伤害/招架属性（同一行展示，各占一半宽度）
-  const hasFamily = !!skill.familyList;
-  const hasElement =
-    skill.autoZhaoAtkDamageClass != null && skill.autoZhaoAtkDamageClass !== "";
-  if (hasFamily || hasElement) {
-    const cells = [];
-    if (hasFamily) {
-      cells.push(
-        el("div", { class: "meta-cell" }, [
-          el("span", { class: "skill-meta-label" }, "门派："),
-          el("span", { class: "badge badge-info" }, skill.familyList),
-        ]),
-      );
-    }
-    if (hasElement) {
-      const elementName = getElementName(skill.autoZhaoAtkDamageClass);
-      if (elementName) {
-        cells.push(
-          el("div", { class: "meta-cell" }, [
-            el("span", { class: "skill-meta-label" }, "属性："),
-            el("span", { class: "badge badge-element" }, elementName),
-          ]),
-        );
-      }
-    }
-    if (cells.length) {
-      body.appendChild(el("div", { class: "skill-meta-row" }, cells));
-    }
+  // 门派
+  if (skill.familyList) {
+    body.appendChild(
+      el("div", { class: "skill-meta-row" }, [
+        el("span", { class: "skill-meta-label" }, "门派："),
+        el("span", { class: "badge badge-info" }, skill.familyList),
+      ]),
+    );
   }
 
   // 武学类型
@@ -149,6 +137,41 @@ export function createSkillCard(id, skill, onAction, data) {
         ...types.map((t) => el("span", { class: "badge badge-muted" }, t)),
       ]),
     );
+  }
+
+  // 伤害属性 + 招架属性（同一行展示，各占一半宽度）
+  const hasDamageAttr =
+    skill.autoZhaoAtkDamageClass != null && skill.autoZhaoAtkDamageClass !== "";
+  const hasParryAttr =
+    skill.zhaoJiaDefDamageClass != null && skill.zhaoJiaDefDamageClass !== "";
+
+  if (hasDamageAttr || hasParryAttr) {
+    const cells = [];
+    if (hasDamageAttr) {
+      const damageName = getElementName(skill.autoZhaoAtkDamageClass);
+      if (damageName) {
+        cells.push(
+          el("div", { class: "meta-cell" }, [
+            el("span", { class: "skill-meta-label" }, "伤害："),
+            el("span", { class: "badge badge-element" }, damageName),
+          ]),
+        );
+      }
+    }
+    if (hasParryAttr) {
+      const parryName = getElementName(skill.zhaoJiaDefDamageClass);
+      if (parryName) {
+        cells.push(
+          el("div", { class: "meta-cell" }, [
+            el("span", { class: "skill-meta-label" }, "招架："),
+            el("span", { class: "badge badge-parry" }, parryName),
+          ]),
+        );
+      }
+    }
+    if (cells.length) {
+      body.appendChild(el("div", { class: "skill-meta-row" }, cells));
+    }
   }
 
   // 属性列表（武学系数 + 招式系数统一展示）

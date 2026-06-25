@@ -281,7 +281,7 @@ export const SKILL_ATTRIBUTES = [
   { key: "atkSpd", label: "攻速系数" },
   { key: "neili", label: "内力系数" },
   { key: "HpRate", label: "生命系数" },
-  { key: "autoZhaoAtkDamageClass", label: "伤害/招架类型" },
+  { key: "autoZhaoAtkDamageClass", label: "伤害类型" },
   { key: "zhaoJiaDefDamageParam", label: "招架减伤率" },
 ];
 

@@ -179,9 +179,9 @@ export function showEffectDetail(effectId, activeSkillData, defaultParams = {}) 
         try {
           const argNames = Object.keys(values);
           const argVals = Object.values(values);
-          const funcBody = `const math=Math,min=Math.min,max=Math.max,abs=Math.abs,floor=Math.floor,ceil=Math.ceil;${f.jsScript}`;
+          const funcBody = `'use strict';const math=Math,min=Math.min,max=Math.max,abs=Math.abs,floor=Math.floor,ceil=Math.ceil;${f.jsScript}`;
           const func = new Function(...BLOCKED_GLOBALS, ...argNames, funcBody);
-          let res = func(...BLOCKED_GLOBALS.map(() => undefined), ...argVals);
+          let res = func.call(undefined, ...BLOCKED_GLOBALS.map(() => undefined), ...argVals);
           if (typeof res === 'number') res = parseFloat(res.toFixed(4));
           allResults[f.key] = res;
         } catch {
@@ -197,9 +197,9 @@ export function showEffectDetail(effectId, activeSkillData, defaultParams = {}) 
           Object.keys(defaultParams).forEach((k) => { if (/^z\d+$/.test(k)) durValues[k] = defaultParams[k]; });
           const argNames = Object.keys(durValues);
           const argVals = Object.values(durValues);
-          const funcBody = `const math=Math,min=Math.min,max=Math.max,abs=Math.abs,floor=Math.floor,ceil=Math.ceil;${parseScriptToJS(String(effectData.duration))}`;
+          const funcBody = `'use strict';const math=Math,min=Math.min,max=Math.max,abs=Math.abs,floor=Math.floor,ceil=Math.ceil;${parseScriptToJS(String(effectData.duration))}`;
           const func = new Function(...BLOCKED_GLOBALS, ...argNames, funcBody);
-          const durResult = func(...BLOCKED_GLOBALS.map(() => undefined), ...argVals);
+          const durResult = func.call(undefined, ...BLOCKED_GLOBALS.map(() => undefined), ...argVals);
           if (typeof durResult === 'number' && durResult > 0) durationT = durResult;
         } catch {}
       }

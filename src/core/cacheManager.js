@@ -72,6 +72,31 @@ export async function cacheClearAll() {
   }
 }
 
+// 清理非当前版本的缓存键，避免版本迭代后 IndexedDB 无限增长
+export async function cacheCleanOtherVersions(currentVersion) {
+  if (!currentVersion) return;
+  try {
+    const db = await openDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      const store = tx.objectStore(STORE);
+      const req = store.getAllKeys();
+      req.onsuccess = () => {
+        const suffix = `__v__${currentVersion}`;
+        (req.result || []).forEach((k) => {
+          if (typeof k === 'string' && k.includes('__v__') && !k.endsWith(suffix)) {
+            store.delete(k);
+          }
+        });
+      };
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch {
+    // 清理失败不影响主流程
+  }
+}
+
 // 清理浏览器 CacheStorage（Service Worker 缓存等）
 export async function clearBrowserCacheStorage() {
   if (!('caches' in window)) return;
