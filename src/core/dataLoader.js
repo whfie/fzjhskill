@@ -33,6 +33,10 @@ const RESOURCES = {
     file: "unlockConditionConfig.json.gz",
     cacheKey: "unlockConditionConfig.json",
   },
+  weaponSpecials: {
+    file: "weaponSpecials.json.gz",
+    cacheKey: "weaponSpecials.json",
+  },
 };
 
 const VERSION_FILE = "version.json";
