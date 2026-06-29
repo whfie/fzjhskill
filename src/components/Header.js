@@ -33,6 +33,14 @@ export async function initHeader(currentPage = "") {
         },
         "隐脉查询",
       ),
+      el(
+        "a",
+        {
+          class: `nav-link ${currentPage === "shenbing" ? "active" : ""}`,
+          href: "shenbing.html",
+        },
+        "神兵特性",
+      ),
     ]),
     el("div", { class: "header-actions" }, [
       buildThemeSwitcher(),

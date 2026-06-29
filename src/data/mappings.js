@@ -290,9 +290,11 @@ export const CALC_PARAM_NAMES = {
   currstr: "总臂力",
   currdex: "总身法",
   currcon: "总根骨",
+  currStr: "总臂力",
+  currDex: "总身法",
+  currCon: "总根骨",
   z1: "技能系数",
   avgqiatk: "平均气血攻击",
-  wdamage: "武器伤害力",
   buff1Num: "自身增益数量",
   buff2Num: "自身减益或毒数量",
   buff3Num: "对方增益数量",
@@ -301,7 +303,6 @@ export const CALC_PARAM_NAMES = {
   zhengqi: "侠义值",
   qimax: "当前气血上限",
   qiMax2: "对方气血上限",
-  W1: "武器重量",
   qi: "当前气血",
   qi2: "对方当前气血",
   neili: "当前内力",
@@ -313,6 +314,20 @@ export const CALC_PARAM_NAMES = {
   currjqdamage: "单系谙技值",
   jqdamage: "双系谙技值",
   CN: "淬炼次数",
+  YD1: "硬度",
+  YD2: "硬度",
+  wyindu: "硬度",
+  wyindu2: "硬度",
+  RD1: "韧性",
+  RD2: "韧性",
+  wrendu: "韧性",
+  wrendu2: "韧性",
+  W1: "武器重量",
+  W2: "武器重量",
+  wweight: "武器重量",
+  wweight2: "武器重量",
+  wdamage: "武器伤害力",
+  wdamage2: "武器伤害力",
   nengGongRecoverNeiLiFactor: "内功内力系数",
   jiaLi: "当前加力值",
   jiaLiMax: "加力最大值",
@@ -399,5 +414,31 @@ export const CALC_SELECT_PARAMS = [
     default: 0,
   },
 ];
+
+// 神兵特性生效条件（conditiontype）
+export const CONDITION_TYPE_NAMES = {
+  0: "被动",
+  2: "命中生效",
+  3: "敌方招架生效",
+};
+
+export function getConditionTypeName(type) {
+  return (
+    CONDITION_TYPE_NAMES[type] ?? CONDITION_TYPE_NAMES[String(type)] ?? type
+  );
+}
+
+// 神兵特性数值类型（conditiontype=0 时计算结果描述）
+export const SPECIAL_NUMBER_NAMES = {
+  HIT: "增加命中力",
+  ATK: "增加攻击力",
+  DODGE: "增加闪避力",
+  DAMAGE: "增加神兵伤害力",
+  PARRY: "增加招架力",
+};
+
+export function getSpecialNumberName(sn) {
+  return SPECIAL_NUMBER_NAMES[sn] || sn;
+}
 
 export { LOGIC_CN };

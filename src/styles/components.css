@@ -1471,3 +1471,28 @@
   background: var(--bg-secondary);
   border-radius: 10px;
 }
+
+/* ===== 神兵特性卡片 ===== */
+.ws-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ws-card-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-raw-pre {
+  margin: 8px 16px;
+  max-height: 240px;
+}
