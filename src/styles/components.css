@@ -791,6 +791,7 @@
 
 .modal-container.modal-lg {
   max-width: 900px;
+  max-height: 95vh;
 }
 .modal-container.modal-sm {
   max-width: 500px;
@@ -1171,6 +1172,160 @@
   word-break: break-all;
   max-height: 60vh;
   overflow-y: auto;
+}
+
+/* ===== 预设配置弹窗 ===== */
+.preset-config-body {
+  padding: 16px 20px;
+}
+
+/* 区域标题 */
+.preset-sec-head {
+  font-family: var(--font-heading);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 10px 0 6px 10px;
+  margin-top: 10px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 8px;
+  position: relative;
+}
+.preset-sec-head::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.preset-sec-head:first-child {
+  margin-top: 0;
+}
+
+/* 预设网格：比 calc-grid 稍宽的列 */
+.preset-grid {
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+}
+
+/* 带单位的输入框 */
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.input-with-unit input {
+  flex: 1;
+  min-width: 0;
+}
+.field-unit {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* 神兵攻击力特性额外参数区 */
+.preset-atk-spec-wrap {
+  background: var(--accent-light);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  padding: 8px 12px 10px;
+  margin-bottom: 2px;
+}
+.preset-spec-hint {
+  font-size: 0.75rem;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+/* 宽字段（跨两列） */
+.calc-field-wide {
+  grid-column: span 2;
+}
+
+/* 属性参考区 */
+.preset-ref-area {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  margin-bottom: 4px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+}
+.preset-ref-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.preset-ref-label {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.preset-ref-val {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* 计算结果展示 */
+.preset-calc-res {
+  min-height: 28px;
+  padding: 2px 0 4px;
+}
+.preset-avgqiatk-result {
+  font-size: 0.9rem;
+  padding: 6px 0;
+}
+
+/* 底部按钮行 */
+.preset-btn-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+  margin-top: 6px;
+}
+
+/* avgqiatk 标签行：标签文字 + 预设按钮水平排列 */
+.avgqiatk-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+.avgqiatk-label-row label {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+/* 预设配置按钮（嵌入 calc-grid 中） */
+.preset-config-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  font-size: 0.72rem;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--transition);
+  font-family: inherit;
+  line-height: 1;
+}
+.preset-config-btn:hover {
+  color: var(--accent);
+  background: transparent;
 }
 
 /* ===== 隐脉页面 ===== */

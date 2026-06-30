@@ -143,6 +143,14 @@
     grid-template-columns: 1fr 1fr;
   }
 
+  /* 预设配置弹窗 */
+  .preset-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .preset-ref-area {
+    grid-template-columns: 1fr;
+  }
+
   /* 隐脉选择栏 */
   .meridian-selector-bar {
     flex-direction: column;
@@ -202,6 +210,12 @@
   }
   .calc-grid {
     grid-template-columns: 1fr;
+  }
+  .preset-grid {
+    grid-template-columns: 1fr;
+  }
+  .calc-field-wide {
+    grid-column: span 1;
   }
   .skill-card-body {
     padding: 12px;

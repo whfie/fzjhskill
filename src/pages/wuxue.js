@@ -336,6 +336,7 @@ async function handleCardAction(action, skillId, skill, extra) {
           extra.activeId,
           activeSkillData,
           bookSkillUnlockData,
+          { skillId, skill, skillAutoData },
         );
       }
       break;
@@ -349,6 +350,7 @@ async function handleCardAction(action, skillId, skill, extra) {
         skillId,
         activeSkillData,
         bookSkillUnlockData,
+        { skillId, skill, skillAutoData },
       );
       break;
     case "passive":

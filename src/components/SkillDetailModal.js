@@ -106,7 +106,7 @@ function renderConditionCard(label, conditions) {
 }
 
 // 绑定效果链接点击
-function bindEffectLinks(body, activeSkillData) {
+function bindEffectLinks(body, activeSkillData, skillOpts = {}) {
   body.addEventListener("click", (e) => {
     const link = e.target.closest(".effect-link");
     if (!link) return;
@@ -120,7 +120,7 @@ function bindEffectLinks(body, activeSkillData) {
       });
     }
     if (costVal != null) defaultParams.cost = parseFloat(costVal) || 0;
-    showEffectDetail(effectId, activeSkillData, defaultParams);
+    showEffectDetail(effectId, activeSkillData, defaultParams, skillOpts);
   });
 }
 
@@ -143,6 +143,7 @@ export function showActiveSkillModal(
   activeId,
   activeSkillData,
   bookSkillUnlockData,
+  extraOpts = {},
 ) {
   const groups = findActiveSkillsByActiveId(activeId, activeSkillData);
   const group = groups[0];
@@ -162,7 +163,15 @@ export function showActiveSkillModal(
   );
   body.appendChild(groupEl);
 
-  bindEffectLinks(body, activeSkillData);
+  // 构造技能上下文传递给效果详情
+  const { skill, skillAutoData, skillId } = extraOpts;
+  const passiveStats =
+    skill && skillAutoData && skillId
+      ? getPassiveStats(skillId, skillAutoData)
+      : null;
+  const skillOpts = { skillId, skill, avgAtk: passiveStats?.avgAtk };
+
+  bindEffectLinks(body, activeSkillData, skillOpts);
   modal.show();
 }
 
@@ -172,6 +181,7 @@ export function showAllActiveSkillsModal(
   skillId,
   activeSkillData,
   bookSkillUnlockData,
+  extraOpts = {},
 ) {
   const groups = findActiveSkills(skillId, activeSkillData);
   if (groups.length === 0) {
@@ -191,7 +201,13 @@ export function showAllActiveSkillsModal(
     );
   });
 
-  bindEffectLinks(body, activeSkillData);
+  // 构造技能上下文传递给效果详情
+  const { skill, skillAutoData } = extraOpts;
+  const passiveStats =
+    skill && skillAutoData ? getPassiveStats(skillId, skillAutoData) : null;
+  const skillOpts = { skillId, skill, avgAtk: passiveStats?.avgAtk };
+
+  bindEffectLinks(body, activeSkillData, skillOpts);
   modal.show();
 }
 
