@@ -6,6 +6,7 @@ import {
   createFilterPanel,
   populateFilterBadges,
   getUniqueValues,
+  getFamilyValues,
   matchesFilters,
   filterState,
 } from "../components/FilterPanel.js";
@@ -126,7 +127,7 @@ async function initWuxuePage() {
     // 填充筛选器所需的可选值
     populateFilterBadges(
       "familyFilters",
-      getUniqueValues(skillData.skills, "familyList"),
+      getFamilyValues(skillData.skills),
       "family",
       safeRefresh,
     );

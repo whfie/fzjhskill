@@ -5,6 +5,7 @@ import {
   getElementName,
   getWeaponType,
   SKILL_ATTRIBUTES,
+  getFamilyName,
 } from "../data/mappings.js";
 import { findActiveSkills, getPassiveStats } from "./SkillDetailModal.js";
 
@@ -104,11 +105,28 @@ export function createSkillCard(id, skill, onAction, data) {
   }
 
   // 门派
-  if (skill.familyList) {
+  const useFamilyListDirect = skill.familyList === "门派心法";
+  const families = useFamilyListDirect
+    ? [skill.familyList]
+    : skill.familyId
+      ? String(skill.familyId)
+          .split("#")
+          .map((f) => f.trim())
+          .filter(Boolean)
+          .map((f) => getFamilyName(f) || f)
+      : skill.familyList
+        ? String(skill.familyList)
+            .split(",")
+            .map((f) => f.trim())
+            .filter(Boolean)
+        : [];
+  if (families.length > 0) {
     body.appendChild(
       el("div", { class: "skill-meta-row" }, [
         el("span", { class: "skill-meta-label" }, "门派："),
-        el("span", { class: "badge badge-info" }, skill.familyList),
+        ...families.map((f) =>
+          el("span", { class: "badge badge-info" }, f),
+        ),
       ]),
     );
   }

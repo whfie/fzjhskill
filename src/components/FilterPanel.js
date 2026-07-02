@@ -1,6 +1,10 @@
 // 过滤面板组件
 import { el } from "../utils/dom.js";
-import { getElementName, getMethodName } from "../data/mappings.js";
+import {
+  getElementName,
+  getMethodName,
+  getFamilyName,
+} from "../data/mappings.js";
 
 export const filterState = {
   family: new Set(),
@@ -168,7 +172,9 @@ export function populateFilterBadges(
         ? getElementName
         : filterType === "methods"
           ? getMethodName
-          : (v) => v;
+          : filterType === "family"
+            ? (v) => getFamilyName(v) || v
+            : (v) => v;
     const badge = el(
       "span",
       {
@@ -206,6 +212,26 @@ export function getUniqueValues(skills, key) {
   return Array.from(values).filter(Boolean);
 }
 
+export function getFamilyValues(skills) {
+  const values = new Set();
+  Object.values(skills).forEach((skill) => {
+    if (skill.familyList === "门派心法") {
+      values.add("门派心法");
+      return;
+    }
+    const val = skill.familyId || skill.familyList;
+    if (val) {
+      const str = String(val);
+      const sep = skill.familyId ? "#" : ",";
+      str.split(sep).forEach((v) => {
+        const t = v.trim();
+        if (t) values.add(t);
+      });
+    }
+  });
+  return Array.from(values).filter(Boolean);
+}
+
 export function matchesFilters(skill, searchText, searchIndex) {
   // 搜索匹配
   const searchMatch =
@@ -222,9 +248,22 @@ export function matchesFilters(skill, searchText, searchIndex) {
       activeSkillMatch = true;
   }
 
+  const familyList =
+    skill.familyList === "门派心法"
+      ? ["门派心法"]
+      : (() => {
+          const familyRaw = skill.familyId || skill.familyList;
+          const familySep = skill.familyId ? "#" : ",";
+          return familyRaw
+            ? String(familyRaw)
+                .split(familySep)
+                .map((f) => f.trim())
+                .filter(Boolean)
+            : [];
+        })();
   const familyMatch =
     filterState.family.size === 0 ||
-    (skill.familyList && filterState.family.has(skill.familyList));
+    familyList.some((f) => filterState.family.has(f));
   const juexueMatch =
     !filterState.isJueXue ||
     (skill.mcmrestrict && skill.mcmrestrict.includes(",300"));
