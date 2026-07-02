@@ -22,6 +22,7 @@ export async function initHeader(currentPage = "") {
         {
           class: `nav-link ${currentPage === "wuxue" ? "active" : ""}`,
           href: "index.html",
+          "data-short": "武学",
         },
         "武学查询",
       ),
@@ -30,6 +31,7 @@ export async function initHeader(currentPage = "") {
         {
           class: `nav-link ${currentPage === "yinmai" ? "active" : ""}`,
           href: "yinmai.html",
+          "data-short": "隐脉",
         },
         "隐脉查询",
       ),
@@ -38,8 +40,18 @@ export async function initHeader(currentPage = "") {
         {
           class: `nav-link ${currentPage === "shenbing" ? "active" : ""}`,
           href: "shenbing.html",
+          "data-short": "神兵",
         },
         "神兵特性",
+      ),
+      el(
+        "a",
+        {
+          class: `nav-link ${currentPage === "quanjiao" ? "active" : ""}`,
+          href: "quanjiao.html",
+          "data-short": "拳脚",
+        },
+        "拳脚特性",
       ),
     ]),
     el("div", { class: "header-actions" }, [

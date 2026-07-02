@@ -1640,8 +1640,7 @@
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
-  flex-shrink: 0;
-  max-width: 60%;
+  flex-shrink: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

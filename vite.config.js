@@ -23,6 +23,7 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
         yinmai: resolve(__dirname, "yinmai.html"),
         shenbing: resolve(__dirname, "shenbing.html"),
+        quanjiao: resolve(__dirname, "quanjiao.html"),
       },
       output: {
         // 将共享的第三方依赖与公共模块提取到单独 chunk，优化缓存

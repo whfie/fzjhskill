@@ -432,6 +432,7 @@ export function getConditionTypeName(type) {
 export const SPECIAL_NUMBER_NAMES = {
   HIT: "增加命中力",
   ATK: "增加攻击力",
+  DEF: "增加防御力",
   DODGE: "增加闪避力",
   DAMAGE: "增加神兵伤害力",
   PARRY: "增加招架力",
@@ -439,6 +440,34 @@ export const SPECIAL_NUMBER_NAMES = {
 
 export function getSpecialNumberName(sn) {
   return SPECIAL_NUMBER_NAMES[sn] || sn;
+}
+
+// 拳脚特性分支（peculiarityid 首位数字）
+export const BRANCH_NAMES = {
+  1: "拳",
+  2: "掌",
+  3: "爪",
+  4: "指",
+  5: "腿",
+};
+
+export function getBranchName(peculiarityid) {
+  const first = String(peculiarityid).charAt(0);
+  return BRANCH_NAMES[first] ?? first;
+}
+
+// 各分支对应的徽章样式
+export const BRANCH_BADGES = {
+  1: "badge-danger",
+  2: "badge-warning",
+  3: "badge-info",
+  4: "badge-success",
+  5: "badge-muted",
+};
+
+export function getBranchBadge(peculiarityid) {
+  const first = String(peculiarityid).charAt(0);
+  return BRANCH_BADGES[first] ?? "badge-muted";
 }
 
 export { LOGIC_CN };

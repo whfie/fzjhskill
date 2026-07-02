@@ -372,7 +372,7 @@ export function showEffectDetail(
       const notes = [];
       if (durationT > 0) notes.push(`持续 ${durationT} 秒`);
       if (probability !== null)
-        notes.push(`生效概率 ${Math.round(probability * 100)}%`);
+        notes.push(`生效概率 ${(probability * 100).toFixed(4)}%`);
 
       resultsDiv.appendChild(
         el("div", { class: "calc-result" }, [
@@ -695,7 +695,7 @@ export function showEffectDetail(
         if (isLast && arg3MaxCount !== null)
           notes.push(`最多生效 ${arg3MaxCount} 次`);
         if (isLast && isWeaponSpecial && probability !== null)
-          notes.push(`生效概率 ${Math.round(probability * 100)}%`);
+          notes.push(`生效概率 ${(probability * 100).toFixed(4)}%`);
 
         const resultEl = el("div", { class: "calc-result" }, [
           el("strong", {}, labelName),

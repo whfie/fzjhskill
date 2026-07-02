@@ -38,13 +38,26 @@ export function showWeaponSpecialEffect(special, activeSkillData) {
   }
 }
 
-// conditiontype=0 的公式计算弹窗
+// conditiontype=0 的公式计算弹窗（神兵特性专用入口）
 function showWeaponSpecialFormulaModal(special) {
-  const { formula, specialnumber } = special;
-  const resultLabel = getSpecialNumberName(specialnumber);
+  showFormulaCalcModal({
+    formula: special.formula,
+    resultKey: special.specialnumber,
+    title: `特性效果: ${special.name || ''} - ${getSpecialNumberName(special.specialnumber)}`,
+    rawData: special,
+  });
+}
+
+// 通用公式计算弹窗：conditiontype=0 的特性效果（神兵特性 / 拳脚特性共用）
+//   formula    - 公式字符串或数值常量
+//   resultKey  - 结果描述键（如 HIT/ATK/DEF/DODGE/PARRY），经 getSpecialNumberName 转中文
+//   title      - 弹窗标题
+//   rawData    - 底部 JSON 展示的原始数据
+export function showFormulaCalcModal({ formula, resultKey, title, rawData }) {
+  const resultLabel = getSpecialNumberName(resultKey);
 
   const modal = new Modal({
-    title: `特性效果: ${special.name || ''} - ${resultLabel}`,
+    title: title || `特性效果 - ${resultLabel}`,
     size: 'lg',
   });
   const body = modal.getBody();
@@ -61,7 +74,7 @@ function showWeaponSpecialFormulaModal(special) {
       ]),
     );
     body.appendChild(
-      el('div', { class: 'json-viewer' }, JSON.stringify(special, null, 2)),
+      el('div', { class: 'json-viewer' }, JSON.stringify(rawData, null, 2)),
     );
     modal.show();
     return;
@@ -95,7 +108,7 @@ function showWeaponSpecialFormulaModal(special) {
       ]),
     );
     body.appendChild(
-      el('div', { class: 'json-viewer' }, JSON.stringify(special, null, 2)),
+      el('div', { class: 'json-viewer' }, JSON.stringify(rawData, null, 2)),
     );
     modal.show();
     return;
@@ -203,7 +216,7 @@ function showWeaponSpecialFormulaModal(special) {
 
   body.appendChild(calcContainer);
   body.appendChild(
-    el('div', { class: 'json-viewer' }, JSON.stringify(special, null, 2)),
+    el('div', { class: 'json-viewer' }, JSON.stringify(rawData, null, 2)),
   );
 
   modal.show();

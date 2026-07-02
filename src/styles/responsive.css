@@ -33,6 +33,11 @@
   }
   .nav-link {
     padding: 6px 10px;
+    font-size: 0;
+  }
+  .nav-link::after {
+    content: attr(data-short);
+    display: inline;
     font-size: 0.8rem;
   }
 
@@ -200,6 +205,9 @@
   }
   .nav-link {
     padding: 6px 8px;
+    font-size: 0;
+  }
+  .nav-link::after {
     font-size: 0.75rem;
   }
   .theme-btn span {

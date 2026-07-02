@@ -46,9 +46,9 @@
   --shadow-md: 0 4px 12px rgba(92, 83, 67, 0.12);
   --shadow-lg: 0 8px 32px rgba(92, 83, 67, 0.16);
 
-  --font-heading: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
-  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-code: 'JetBrains Mono', 'Consolas', monospace;
+  --font-heading: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-code: "JetBrains Mono", "Consolas", monospace;
 
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -59,52 +59,57 @@
 
 /* 主题二：墨韵武侠（深色 · 水墨意境） */
 [data-theme="moyun"] {
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16213e;
-  --bg-card: #1e1e36;
-  --bg-elevated: #25254a;
-  --bg-overlay: rgba(10, 10, 20, 0.85);
-  --bg-modal: #1e1e36;
-  --bg-input: #16162a;
-  --bg-hover: #2a2a4a;
-  --bg-code: #12122a;
+  /* 背景层级：从深墨底色到卡片有明显亮度落差，确保层次可辨 */
+  --bg-primary: #0d0d0b; /* 深墨底 */
+  --bg-secondary: #131310; /* 次背景 */
+  --bg-card: #201f17; /* 卡片：明显比底色亮，暖墨色 */
+  --bg-elevated: #2a2920; /* 浮起层：弹窗/下拉背景 */
+  --bg-overlay: rgba(6, 6, 4, 0.92);
+  --bg-modal: #201f17;
+  --bg-input: #181710; /* 输入框略深于卡片 */
+  --bg-hover: #302f24; /* 悬停高亮 */
+  --bg-code: #0f0f0d;
 
-  --text-primary: #e8e0d0;
-  --text-secondary: #b0a890;
-  --text-muted: #787060;
-  --text-inverse: #1a1a2e;
+  /* 文字层级：所有级别在深色卡片上均保证可读 */
+  --text-primary: #ece2c8; /* 宣纸暖白，~13:1 对比度 */
+  --text-secondary: #c2a870; /* 金色·次级，~6.8:1 */
+  --text-muted: #9c876a; /* 棕色·辅助，~4.7:1，满足 WCAG AA */
+  --text-inverse: #0d0d0b;
 
-  --accent: #c5392e;
-  --accent-hover: #d4493e;
-  --accent-light: #3a1e1a;
+  /* 强调色：朱砂红，在深色背景上饱和醒目 */
+  --accent: #cc4a38;
+  --accent-hover: #de5a46;
+  --accent-light: #2c1510; /* 朱砂红淡底，用于徽章背景 */
   --accent-text: #ffffff;
 
-  --secondary: #4a7c59;
-  --secondary-light: #1a2e22;
+  --secondary: #5c8c6a; /* 竹青绿 */
+  --secondary-light: #1a2c20;
 
-  --danger: #e54848;
-  --danger-light: #2a1a1a;
-  --warning: #d4a017;
-  --warning-light: #2a2410;
-  --info: #4a8a9e;
-  --info-light: #1a2a30;
-  --success: #4a7c59;
-  --success-light: #1a2e22;
+  --danger: #e05050;
+  --danger-light: #281818;
+  --warning: #c8a030;
+  --warning-light: #281e0a;
+  --info: #5a8aae;
+  --info-light: #18262e;
+  --success: #5c8c6a;
+  --success-light: #1a2c20;
 
-  --element: #a87ac5;
-  --element-light: #2a1a30;
+  --element: #9a6ab8;
+  --element-light: #221428;
 
-  --border: #2a2a4a;
-  --border-light: #222240;
-  --border-strong: #3a3a5a;
+  /* 边框：比卡片背景亮度显著提升，确保线条清晰可见 */
+  --border: #3e3d32; /* 常规边框，约 2× 卡片亮度 */
+  --border-light: #302f26; /* 淡边框 */
+  --border-strong: #565240; /* 强调边框，用于选中/聚焦 */
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  /* 阴影：更深，让卡片从背景中浮起 */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.75);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.85);
 
-  --font-heading: 'LXGW WenKai', 'Noto Serif SC', 'STKaiti', serif;
-  --font-body: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
-  --font-code: 'JetBrains Mono', 'Consolas', monospace;
+  --font-heading: "LXGW WenKai", "Noto Serif SC", "STKaiti", serif;
+  --font-body: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-code: "JetBrains Mono", "Consolas", monospace;
 
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -158,9 +163,9 @@
   --shadow-md: 0 4px 12px rgba(61, 43, 31, 0.15);
   --shadow-lg: 0 8px 32px rgba(61, 43, 31, 0.2);
 
-  --font-heading: 'Ma Shan Zheng', 'STKaiti', 'KaiTi', cursive;
-  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-code: 'JetBrains Mono', 'Consolas', monospace;
+  --font-heading: "Ma Shan Zheng", "STKaiti", "KaiTi", cursive;
+  --font-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-code: "JetBrains Mono", "Consolas", monospace;
 
   --radius-sm: 2px;
   --radius-md: 4px;
