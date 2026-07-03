@@ -53,6 +53,15 @@ export async function initHeader(currentPage = "") {
         },
         "拳脚特性",
       ),
+      el(
+        "a",
+        {
+          class: `nav-link ${currentPage === "equipment" ? "active" : ""}`,
+          href: "equipment.html",
+          "data-short": "装备",
+        },
+        "装备查询",
+      ),
     ]),
     el("div", { class: "header-actions" }, [
       buildThemeSwitcher(),

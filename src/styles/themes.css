@@ -55,6 +55,9 @@
   --radius-lg: 12px;
 
   --texture: none;
+
+  --equip-title-bg: linear-gradient(135deg, #2c2416 0%, #1a1408 50%, #2c2416 100%);
+  --equip-title-text: #f5f0e1;
 }
 
 /* 主题二：墨韵武侠（深色 · 水墨意境） */
@@ -116,6 +119,9 @@
   --radius-lg: 12px;
 
   --texture: none;
+
+  --equip-title-bg: linear-gradient(135deg, #2a2920 0%, #1a1910 50%, #2a2920 100%);
+  --equip-title-text: #ece2c8;
 }
 
 /* 主题三：简牍古卷（浅色 · 竹简古籍） */
@@ -172,4 +178,7 @@
   --radius-lg: 6px;
 
   --texture: none;
+
+  --equip-title-bg: linear-gradient(135deg, #3d2b1f 0%, #2a1c12 50%, #3d2b1f 100%);
+  --equip-title-text: #f0ecd8;
 }

@@ -23,6 +23,7 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
         yinmai: resolve(__dirname, "yinmai.html"),
         shenbing: resolve(__dirname, "shenbing.html"),
+        equipment: resolve(__dirname, "equipment.html"),
         quanjiao: resolve(__dirname, "quanjiao.html"),
       },
       output: {

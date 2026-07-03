@@ -39,6 +39,7 @@ const RESOURCES = {
   },
   character: { file: "character.json.gz", cacheKey: "character.json" },
   characterPool: { file: "characterPool.json.gz", cacheKey: "characterPool.json" },
+  equipment: { file: "equipment.json.gz", cacheKey: "equipment.json" },
 };
 
 const VERSION_FILE = "version.json";
