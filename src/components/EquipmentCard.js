@@ -63,30 +63,23 @@ export function createEquipmentCard(item) {
 
   const card = el('div', { class: 'equipment-card' });
 
+  const headerBadges = [];
+  if (item.bType) {
+    headerBadges.push(el('span', { class: 'badge badge-info' }, item.bType));
+  }
+  if (item.shoucang === 1 || item.shoucang === '1') {
+    headerBadges.push(el('span', { class: 'badge badge-accent' }, '可收藏'));
+  }
+
   const header = el('div', { class: 'equipment-card-header' }, [
     el('span', {
       class: 'equipment-card-title',
       style: nameColor ? { color: nameColor } : {},
     }, nameText),
+    el('div', { class: 'equipment-card-badges' }, headerBadges),
   ]);
 
   const body = el('div', { class: 'equipment-card-body' });
-
-  const headerBadges = [];
-  if (item.type) {
-    headerBadges.push(el('span', { class: 'equipment-type-badge' }, item.type));
-  }
-  if (item.bType) {
-    headerBadges.push(el('span', { class: 'equipment-subtype-badge' }, item.bType));
-  }
-  headerBadges.push(el('span', { class: 'equipment-card-class' }, isArmor ? '防具' : '武器'));
-  if (item.shoucang === 1 || item.shoucang === '1') {
-    headerBadges.push(el('span', { class: 'badge badge-accent' }, '可收藏'));
-  }
-
-  if (headerBadges.length > 0) {
-    body.appendChild(el('div', { class: 'equipment-card-badges' }, headerBadges));
-  }
 
   if (item.dsc) {
     body.appendChild(el('div', { class: 'equipment-desc' }, item.dsc));

@@ -152,9 +152,6 @@ function createCanCollectToggle(onChange) {
         if (equipFilterState.canCollect === null) {
           equipFilterState.canCollect = true;
           toggle.classList.add('active');
-        } else if (equipFilterState.canCollect === true) {
-          equipFilterState.canCollect = false;
-          toggle.classList.remove('active');
         } else {
           equipFilterState.canCollect = null;
           toggle.classList.remove('active');
@@ -204,7 +201,7 @@ function createWeaponTypeGroup(onChange) {
 function createArmorSubTypeGroup(onChange) {
   return el('div', { class: 'filter-group' }, [
     el('div', { class: 'filter-header' }, [
-      el('span', { class: 'filter-title' }, '防具子类型'),
+      el('span', { class: 'filter-title' }, '防具类型'),
       el(
         'span',
         {
@@ -311,7 +308,7 @@ function createSortGroup(onChange) {
   ]);
 }
 
-import { isArmorItem } from '../data/equipmentConstants.js';
+import { isArmorItem, WEAPON_TYPES } from '../data/equipmentConstants.js';
 
 export function populateEquipmentFilterBadges(equipmentData, onChange) {
   const weaponTypes = new Set();
@@ -322,7 +319,9 @@ export function populateEquipmentFilterBadges(equipmentData, onChange) {
     if (isArmorItem(item)) {
       if (item.bType) armorSubTypes.add(item.bType);
     } else {
-      if (item.type) weaponTypes.add(item.type);
+      if (item.type && WEAPON_TYPES.includes(item.type)) {
+        weaponTypes.add(item.type);
+      }
       if (item.bType) weaponSubTypes.add(item.bType);
     }
   });
@@ -395,20 +394,20 @@ export function matchesEquipmentFilters(item, searchText) {
       ? item.shoucang === 1 || item.shoucang === '1'
       : item.shoucang !== 1 && item.shoucang !== '1');
 
-  const weaponTypeMatch =
-    isArmor ||
-    equipFilterState.weaponType.size === 0 ||
-    (item.type && equipFilterState.weaponType.has(item.type));
+  let weaponTypeMatch = true;
+  if (equipFilterState.weaponType.size > 0) {
+    weaponTypeMatch = !isArmor && item.type && equipFilterState.weaponType.has(item.type);
+  }
 
-  const armorSubTypeMatch =
-    !isArmor ||
-    equipFilterState.armorSubType.size === 0 ||
-    (item.bType && equipFilterState.armorSubType.has(item.bType));
+  let armorSubTypeMatch = true;
+  if (equipFilterState.armorSubType.size > 0) {
+    armorSubTypeMatch = isArmor && item.bType && equipFilterState.armorSubType.has(item.bType);
+  }
 
-  const weaponSubTypeMatch =
-    isArmor ||
-    equipFilterState.weaponSubType.size === 0 ||
-    (item.bType && equipFilterState.weaponSubType.has(item.bType));
+  let weaponSubTypeMatch = true;
+  if (equipFilterState.weaponSubType.size > 0) {
+    weaponSubTypeMatch = !isArmor && item.bType && equipFilterState.weaponSubType.has(item.bType);
+  }
 
   return (
     searchMatch &&
