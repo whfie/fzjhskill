@@ -278,23 +278,91 @@ function refreshList(seq) {
   let filteredCount = 0;
   const totalCount = Object.keys(skillData.skills).length;
 
-  Object.entries(skillData.skills)
-    .sort(([, a], [, b]) => (a.name || "").localeCompare(b.name || ""))
-    .forEach(([id, skill]) => {
-      if (
-        typeof skill === "object" &&
-        skill !== null &&
-        matchesFilters(skill, searchText, searchIndex)
-      ) {
-        filteredCount++;
-        cards.push(
-          createSkillCard(id, skill, handleCardAction, {
-            activeSkillData,
-            skillAutoData,
-          }),
-        );
+  let filteredSkills = Object.entries(skillData.skills).filter(
+    ([, skill]) =>
+      typeof skill === "object" &&
+      skill !== null &&
+      matchesFilters(skill, searchText, searchIndex),
+  );
+
+  if (filterState.sortField) {
+    const passiveAvgFields = new Set([
+      "avgAtk",
+      "avgDam",
+      "avgHitRate",
+      "avgDuration",
+    ]);
+    filteredSkills = filteredSkills.filter(([id, skill]) => {
+      if (passiveAvgFields.has(filterState.sortField)) {
+        return skillAutoData?.[id] && Object.keys(skillAutoData[id]).length > 0;
       }
+      const val = skill[filterState.sortField];
+      return val != null && val !== "" && Number(val) > 0;
     });
+
+    filteredSkills.sort(([idA, a], [idB, b]) => {
+      const field = filterState.sortField;
+      let valA, valB;
+      if (passiveAvgFields.has(field)) {
+        const statsA = skillAutoData?.[idA];
+        const statsB = skillAutoData?.[idB];
+        if (!statsA || !statsB) return 0;
+        let totalA = 0, totalB = 0, countA = 0, countB = 0;
+        Object.values(statsA).forEach((s) => {
+          if (field === "avgDuration") {
+            totalA += (s.preDuration || 0) + (s.aftDuration || 0);
+          } else {
+            let key;
+            if (field === "avgAtk") key = "atk";
+            else if (field === "avgDam") key = "dam";
+            else if (field === "avgHitRate") key = "hitRate";
+            else {
+              const k = field.replace("avg", "");
+              key = k.charAt(0).toLowerCase() + k.slice(1);
+            }
+            totalA += s[key] || 0;
+          }
+          countA++;
+        });
+        Object.values(statsB).forEach((s) => {
+          if (field === "avgDuration") {
+            totalB += (s.preDuration || 0) + (s.aftDuration || 0);
+          } else {
+            let key;
+            if (field === "avgAtk") key = "atk";
+            else if (field === "avgDam") key = "dam";
+            else if (field === "avgHitRate") key = "hitRate";
+            else {
+              const k = field.replace("avg", "");
+              key = k.charAt(0).toLowerCase() + k.slice(1);
+            }
+            totalB += s[key] || 0;
+          }
+          countB++;
+        });
+        valA = countA > 0 ? totalA / countA : 0;
+        valB = countB > 0 ? totalB / countB : 0;
+      } else {
+        valA = Number(a[field]) || 0;
+        valB = Number(b[field]) || 0;
+      }
+      return filterState.sortOrder === "desc" ? valB - valA : valA - valB;
+    });
+  } else {
+    filteredSkills.sort(([, a], [, b]) =>
+      (a.name || "").localeCompare(b.name || ""),
+    );
+  }
+
+  filteredSkills.forEach(([id, skill]) => {
+    filteredCount++;
+    cards.push(
+      createSkillCard(id, skill, handleCardAction, {
+        activeSkillData,
+        skillAutoData,
+      }),
+    );
+  });
 
   updateStats(filteredCount, totalCount, !!activeSkillData);
 

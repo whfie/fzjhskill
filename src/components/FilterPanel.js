@@ -13,6 +13,8 @@ export const filterState = {
   methods: new Set(),
   isJueXue: false,
   isZhiShi: false,
+  sortField: null,
+  sortOrder: 'desc',
 };
 
 // 刷新已激活筛选数量显示
@@ -39,6 +41,83 @@ function refreshActiveCount() {
   if (clearBtn) {
     clearBtn.classList.toggle("hidden", count === 0);
   }
+}
+
+function createSortGroup(onChange) {
+  const sortFields = [
+    { key: "atk", label: "攻击力系数" },
+    { key: "damRate", label: "伤害率系数" },
+    { key: "def", label: "防御系数" },
+    { key: "parry", label: "招架系数" },
+    { key: "hitRate", label: "命中率系数" },
+    { key: "dodge", label: "闪避系数" },
+    { key: "atkSpd", label: "攻速系数" },
+    { key: "potEfficiency", label: "潜能效率" },
+    { key: "neili", label: "内力系数" },
+    { key: "HpRate", label: "生命系数" },
+    { key: "avgAtk", label: "招式平均攻击" },
+    { key: "avgDam", label: "招式平均伤害" },
+    { key: "avgHitRate", label: "招式平均命中" },
+    { key: "avgDuration", label: "招式平均前后摇" },
+  ];
+
+  const sortButtons = sortFields.map((field) => {
+    const orderIcon = el("span", { class: "sort-order-icon" }, "↓");
+    const btn = el(
+      "button",
+      {
+        class: "filter-badge",
+        onclick: () => {
+          if (filterState.sortField === field.key) {
+            filterState.sortOrder =
+              filterState.sortOrder === "desc" ? "asc" : "desc";
+          } else {
+            filterState.sortField = field.key;
+            filterState.sortOrder = "desc";
+          }
+          document
+            .querySelectorAll("#sortGroup .filter-badge")
+            .forEach((b) => {
+              b.classList.remove("active");
+              const icon = b.querySelector(".sort-order-icon");
+              if (icon) icon.textContent = "↓";
+            });
+          btn.classList.add("active");
+          orderIcon.textContent =
+            filterState.sortOrder === "desc" ? "↓" : "↑";
+          onChange();
+        },
+      },
+      [field.label, orderIcon],
+    );
+    return btn;
+  });
+
+  return el("div", { class: "filter-group" }, [
+    el("div", { class: "filter-header" }, [
+      el("span", { class: "filter-title" }, "排序方式"),
+      el(
+        "span",
+        {
+          class: "filter-clear",
+          onclick: () => {
+            filterState.sortField = null;
+            filterState.sortOrder = "desc";
+            document
+              .querySelectorAll("#sortGroup .filter-badge")
+              .forEach((b) => {
+                b.classList.remove("active");
+                const icon = b.querySelector(".sort-order-icon");
+                if (icon) icon.textContent = "↓";
+              });
+            onChange();
+          },
+        },
+        "清除",
+      ),
+    ]),
+    el("div", { class: "filter-badges", id: "sortGroup" }, sortButtons),
+  ]);
 }
 
 export function createFilterPanel(onChange) {
@@ -90,6 +169,7 @@ export function createFilterPanel(onChange) {
     createFilterGroup("parryFilters", "招架属性", "parry", onChange),
     createFilterGroup("methodsFilters", "武学类型", "methods", onChange),
     createToggleGroup("特殊筛选", onChange),
+    createSortGroup(onChange),
   ]);
 
   panel.appendChild(header);
