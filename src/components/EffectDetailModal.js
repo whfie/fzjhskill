@@ -57,13 +57,18 @@ export function parseScriptToJS(luaScript) {
   return js;
 }
 
-function computeDefaultAvgQiAtk(skill, avgAtk) {
+export function computeDefaultAvgQiAtk(
+  skill,
+  avgAtk,
+  weaponSpecials = [],
+  weaponType = "",
+) {
   const skillDamRate = parseFloat(skill?.damRate) || 0;
   const skillAtkCoef = parseFloat(skill?.atk) || 0;
   const skillPowerAtkRate = parseFloat(skill?.powerAtkRate) || 0;
   const skillAvgAtkCoef = parseFloat(avgAtk) || 0;
 
-  const DA = {
+  const DA_DEFAULT = {
     str: 230,
     dex: 130,
     con: 90,
@@ -72,8 +77,10 @@ function computeDefaultAvgQiAtk(skill, avgAtk) {
     jiaLi: 825,
     neiliTalAtk: 10,
     neiliAttrAtk: 3274,
+    totalStr: 285,
+    CN: 300,
   };
-  const DD = {
+  const DD_DEFAULT = {
     parryDef: 90,
     exp: 40,
     dex: 130,
@@ -81,24 +88,96 @@ function computeDefaultAvgQiAtk(skill, avgAtk) {
     neiliAttrDef: 600,
   };
 
+  const atkC = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("avgqiatk_atk_char")) || {};
+    } catch {
+      return {};
+    }
+  })();
+  const defC = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("avgqiatk_def_char")) || {};
+    } catch {
+      return {};
+    }
+  })();
+
+  const DA = {
+    str: atkC.str ?? DA_DEFAULT.str,
+    dex: atkC.dex ?? DA_DEFAULT.dex,
+    con: atkC.con ?? DA_DEFAULT.con,
+    neiliAttr: atkC.neiliAttr ?? DA_DEFAULT.neiliAttr,
+    exp: atkC.exp ?? DA_DEFAULT.exp,
+    jiaLi: atkC.jiaLi ?? DA_DEFAULT.jiaLi,
+    neiliTalAtk: atkC.neiliTalAtk ?? DA_DEFAULT.neiliTalAtk,
+    neiliAttrAtk: atkC.neiliAttrAtk ?? DA_DEFAULT.neiliAttrAtk,
+    totalStr: atkC.totalStr ?? DA_DEFAULT.totalStr,
+    CN: atkC.CN ?? DA_DEFAULT.CN,
+  };
+  const DD = {
+    parryDef: defC.parryDef ?? DD_DEFAULT.parryDef,
+    exp: defC.exp ?? DD_DEFAULT.exp,
+    dex: defC.dex ?? DD_DEFAULT.dex,
+    neiliTalDef: defC.neiliTalDef ?? DD_DEFAULT.neiliTalDef,
+    neiliAttrDef: defC.neiliAttrDef ?? DD_DEFAULT.neiliAttrDef,
+  };
+
   const neiliMax =
-    11000 * (2 + 0.01 * DA.con + 0.003 * DA.str + 0.003 * DA.dex) + DA.neiliAttr;
+    11000 * (2 + 0.01 * DA.con + 0.003 * DA.str + 0.003 * DA.dex) +
+    DA.neiliAttr;
   const expPow = Math.pow(DA.exp * 1e8, 0.4);
   const baseAtk =
     (1650 * 0.03 * skillAtkCoef + neiliMax / 20 + 10 + expPow) *
       (1 + 0.02 * DA.str) +
     DA.jiaLi * skillPowerAtkRate * (1 + 1650 / 500) * (0.001 * DA.str + 0.49);
+
+  let specBonus = 0;
+  if (weaponType && weaponSpecials.length > 0) {
+    const allSpecials = Array.isArray(weaponSpecials)
+      ? weaponSpecials
+      : Object.values(weaponSpecials);
+    const specials = allSpecials.filter(
+      (sp) =>
+        (sp.weapontype === weaponType ||
+          sp.weapontype === String(weaponType)) &&
+        sp.conditiontype === 0 &&
+        sp.specialnumber === "ATK" &&
+        typeof sp.formula === "string" &&
+        sp.formula.trim() !== "",
+    );
+    for (const sp of specials) {
+      try {
+        const js = sp.formula.trim();
+        const vars = { currStr: DA.totalStr, currstr: DA.totalStr, CN: DA.CN };
+        const fn = new Function(
+          ...BLOCKED_GLOBALS,
+          ...Object.keys(vars),
+          `const math=Math,min=Math.min,max=Math.max,abs=Math.abs,floor=Math.floor,ceil=Math.ceil;${js}`,
+        );
+        const r = fn(
+          ...BLOCKED_GLOBALS.map(() => undefined),
+          ...Object.values(vars),
+        );
+        if (typeof r === "number" && isFinite(r)) specBonus += r;
+      } catch {}
+    }
+  }
+
   const refAtk = Math.round(
-    baseAtk * (1 + DA.neiliTalAtk / 100) + DA.neiliAttrAtk,
+    baseAtk * (1 + DA.neiliTalAtk / 100) + DA.neiliAttrAtk + specBonus,
   );
 
   const defExpPow = Math.pow(DD.exp * 1e8, 0.4);
   const baseDef =
     ((5 * 1650 * DD.parryDef) / 120 + defExpPow + 10) * (1.35 + DD.dex / 200);
-  const refDef = Math.round(baseDef * (1 + DD.neiliTalDef / 100) + DD.neiliAttrDef);
+  const refDef = Math.round(
+    baseDef * (1 + DD.neiliTalDef / 100) + DD.neiliAttrDef,
+  );
 
   return Math.round(
-    (8 * (skillDamRate + (refAtk * (1 + skillAvgAtkCoef) * skillDamRate) / 1000)) /
+    (8 *
+      (skillDamRate + (refAtk * (1 + skillAvgAtkCoef) * skillDamRate) / 1000)) /
       (1 + refDef / 1000),
   );
 }
@@ -477,7 +556,16 @@ export function showEffectDetail(
           // 平均气血攻击：有技能上下文时显示预设配置按钮
           const isAvgQiAtk =
             v === "avgqiatk" && !isWeaponSpecial && opts.skillId && opts.skill;
-          const outputMethodTypes = new Set(["1", "5", "6", "7", "8", "9", "10", "11"]);
+          const outputMethodTypes = new Set([
+            "1",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+          ]);
           const isOutputMethod =
             opts.skill?.methods &&
             String(opts.skill.methods)
@@ -487,7 +575,9 @@ export function showEffectDetail(
 
           if (isAvgQiAtk) {
             // 优先读取当前武学的缓存 avgqiatk 结果
-            const cachedResult = localStorage.getItem(`avgqiatk_${opts.skillId}`);
+            const cachedResult = localStorage.getItem(
+              `avgqiatk_${opts.skillId}`,
+            );
             if (cachedResult !== null && cachedResult !== undefined) {
               defVal = JSON.parse(cachedResult);
             } else if (isOutputMethod) {

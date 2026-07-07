@@ -14,18 +14,57 @@ export const filterState = {
   isJueXue: false,
   isZhiShi: false,
   sortField: null,
-  sortOrder: 'desc',
+  sortOrder: "desc",
 };
 
+const FILTER_STATE_KEY = "wuxue_filter_state";
+
+export function saveFilterState() {
+  try {
+    const state = {
+      family: Array.from(filterState.family),
+      element: Array.from(filterState.element),
+      parry: Array.from(filterState.parry),
+      methods: Array.from(filterState.methods),
+      isJueXue: filterState.isJueXue,
+      isZhiShi: filterState.isZhiShi,
+      sortField: filterState.sortField,
+      sortOrder: filterState.sortOrder,
+    };
+    localStorage.setItem(FILTER_STATE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
+export function loadFilterState() {
+  try {
+    const saved = localStorage.getItem(FILTER_STATE_KEY);
+    if (!saved) return;
+    const state = JSON.parse(saved);
+    if (state.family && Array.isArray(state.family))
+      filterState.family = new Set(state.family.map((v) => String(v)));
+    if (state.element && Array.isArray(state.element))
+      filterState.element = new Set(state.element.map((v) => String(v)));
+    if (state.parry && Array.isArray(state.parry))
+      filterState.parry = new Set(state.parry.map((v) => String(v)));
+    if (state.methods && Array.isArray(state.methods))
+      filterState.methods = new Set(state.methods.map((v) => String(v)));
+    if (state.isJueXue !== undefined) filterState.isJueXue = state.isJueXue;
+    if (state.isZhiShi !== undefined) filterState.isZhiShi = state.isZhiShi;
+    if (state.sortField !== undefined) filterState.sortField = state.sortField;
+    if (state.sortOrder !== undefined) filterState.sortOrder = state.sortOrder;
+  } catch {}
+}
+
 // 刷新已激活筛选数量显示
-function refreshActiveCount() {
+export function refreshActiveCount() {
   const count =
     filterState.family.size +
     filterState.element.size +
     filterState.parry.size +
     filterState.methods.size +
     (filterState.isJueXue ? 1 : 0) +
-    (filterState.isZhiShi ? 1 : 0);
+    (filterState.isZhiShi ? 1 : 0) +
+    (filterState.sortField ? 1 : 0);
 
   const badge = document.getElementById("filterCountBadge");
   const clearBtn = document.querySelector(".filter-clear-all");
@@ -59,6 +98,7 @@ function createSortGroup(onChange) {
     { key: "avgDam", label: "招式平均伤害" },
     { key: "avgHitRate", label: "招式平均命中" },
     { key: "avgDuration", label: "招式平均前后摇" },
+    { key: "avgQiAtk", label: "气血攻击参考" },
   ];
 
   const sortButtons = sortFields.map((field) => {
@@ -66,7 +106,10 @@ function createSortGroup(onChange) {
     const btn = el(
       "button",
       {
-        class: "filter-badge",
+        class:
+          filterState.sortField === field.key
+            ? "filter-badge active"
+            : "filter-badge",
         onclick: () => {
           if (filterState.sortField === field.key) {
             filterState.sortOrder =
@@ -75,21 +118,21 @@ function createSortGroup(onChange) {
             filterState.sortField = field.key;
             filterState.sortOrder = "desc";
           }
-          document
-            .querySelectorAll("#sortGroup .filter-badge")
-            .forEach((b) => {
-              b.classList.remove("active");
-              const icon = b.querySelector(".sort-order-icon");
-              if (icon) icon.textContent = "↓";
-            });
+          document.querySelectorAll("#sortGroup .filter-badge").forEach((b) => {
+            b.classList.remove("active");
+            const icon = b.querySelector(".sort-order-icon");
+            if (icon) icon.textContent = "↓";
+          });
           btn.classList.add("active");
-          orderIcon.textContent =
-            filterState.sortOrder === "desc" ? "↓" : "↑";
+          orderIcon.textContent = filterState.sortOrder === "desc" ? "↓" : "↑";
           onChange();
         },
       },
       [field.label, orderIcon],
     );
+    if (filterState.sortField === field.key) {
+      orderIcon.textContent = filterState.sortOrder === "desc" ? "↓" : "↑";
+    }
     return btn;
   });
 
@@ -215,10 +258,13 @@ function createToggleGroup(title, onChange) {
       "div",
       { class: "filter-toggles" },
       toggles.map((t) => {
+        const isActive = filterState[t.key];
         const chip = el(
           "button",
           {
-            class: "filter-toggle-chip",
+            class: isActive
+              ? "filter-toggle-chip active"
+              : "filter-toggle-chip",
             onclick: () => {
               filterState[t.key] = !filterState[t.key];
               chip.classList.toggle("active");
@@ -255,10 +301,11 @@ export function populateFilterBadges(
           : filterType === "family"
             ? (v) => getFamilyName(v) || v
             : (v) => v;
+    const isActive = filterState[filterType].has(value);
     const badge = el(
       "span",
       {
-        class: "filter-badge",
+        class: isActive ? "filter-badge active" : "filter-badge",
         onclick: () => {
           if (filterState[filterType].has(value)) {
             filterState[filterType].delete(value);
@@ -383,11 +430,19 @@ export function clearAllFilters() {
   filterState.methods.clear();
   filterState.isJueXue = false;
   filterState.isZhiShi = false;
+  filterState.sortField = null;
+  filterState.sortOrder = "desc";
   document
     .querySelectorAll(".filter-badge")
     .forEach((b) => b.classList.remove("active"));
   document
     .querySelectorAll(".filter-toggle-chip")
     .forEach((chip) => chip.classList.remove("active"));
+  document.querySelectorAll("#sortGroup .filter-badge").forEach((b) => {
+    b.classList.remove("active");
+    const icon = b.querySelector(".sort-order-icon");
+    if (icon) icon.textContent = "↓";
+  });
   refreshActiveCount();
+  saveFilterState();
 }

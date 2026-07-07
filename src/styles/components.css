@@ -157,6 +157,14 @@
   opacity: 0.9;
 }
 
+.btn-success {
+  background: #22c55e;
+  color: #fff;
+}
+.btn-success:hover {
+  background: #16a34a;
+}
+
 /* ===== 徽章 ===== */
 .badge {
   display: inline-flex;
@@ -696,6 +704,12 @@
 .attr-value {
   color: var(--text-primary);
   font-weight: 500;
+}
+.attr-item-highlight {
+  background: var(--accent-light);
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 /* 伤害属性标签（紫色系） */

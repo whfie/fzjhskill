@@ -56,6 +56,7 @@ export async function showAvgQiAtkPresetModal({
   skill,
   avgAtk,
   onSave,
+  fromCard = false,
 }) {
   // 技能系数
   const skillAtkCoef = parseFloat(skill?.atk) || 0;
@@ -282,8 +283,35 @@ export async function showAvgQiAtkPresetModal({
 
   // ===== 底部按钮 =====
   const btnRow = el("div", { class: "preset-btn-row" });
-  const saveBtn = el("button", { class: "btn btn-outline btn-sm" }, "保存");
-  btnRow.appendChild(saveBtn);
+  const savePresetBtn = el(
+    "button",
+    {
+      class: "btn btn-outline btn-sm",
+      title: "将当前人物配置保存为全局预设参数",
+    },
+    "参数保存为预设",
+  );
+  const saveResultBtn = el(
+    "button",
+    {
+      class: "btn btn-primary btn-sm",
+      title: "保存当前武学的平均气血攻击计算结果",
+      style: fromCard ? "display: none" : "",
+    },
+    "保存计算结果",
+  );
+  const saveAllBtn = el(
+    "button",
+    {
+      class: "btn btn-success btn-sm",
+      title: "同时保存预设参数和计算结果",
+      style: fromCard ? "display: none" : "",
+    },
+    "保存预设和计算结果",
+  );
+  btnRow.appendChild(savePresetBtn);
+  btnRow.appendChild(saveResultBtn);
+  btnRow.appendChild(saveAllBtn);
   body.appendChild(btnRow);
 
   // ===== 逻辑 =====
@@ -408,17 +436,8 @@ export async function showAvgQiAtkPresetModal({
     });
   }
 
-  // 保存按钮
-  saveBtn.addEventListener("click", () => {
-    const af = gv("atkForce");
-    const df = gv("defForce");
-    const result = Math.round(
-      (8 *
-        (skillDamRate + (af * (1 + skillAvgAtkCoef) * skillDamRate) / 1000)) /
-        (1 + df / 1000),
-    );
-
-    // 全局保存：进攻方人物配置
+  // 参数保存为预设按钮
+  savePresetBtn.addEventListener("click", () => {
     lsSet(K_ATK_CHAR, {
       str: gv("str"),
       dex: gv("dex"),
@@ -431,8 +450,47 @@ export async function showAvgQiAtkPresetModal({
       totalStr: gv("totalStr"),
       CN: gv("CN"),
     });
+    lsSet(K_DEF_CHAR, {
+      parryDef: gv("parryDef"),
+      exp: gv("defExp"),
+      dex: gv("defDex"),
+      neiliTalDef: gv("neiliTalDef"),
+      neiliAttrDef: gv("neiliAttrDef"),
+    });
+    location.reload();
+  });
 
-    // 全局保存：防守方人物配置
+  // 保存计算结果按钮
+  saveResultBtn.addEventListener("click", () => {
+    const af = gv("atkForce");
+    const df = gv("defForce");
+    const result = Math.round(
+      (8 *
+        (skillDamRate + (af * (1 + skillAvgAtkCoef) * skillDamRate) / 1000)) /
+        (1 + df / 1000),
+    );
+
+    lsSet(K_SKILL(skillId), { weaponType: curWeaponType });
+    lsSet(K_RESULT(skillId), result);
+
+    onSave?.(result);
+    modal.close();
+  });
+
+  // 保存预设和计算结果按钮
+  saveAllBtn.addEventListener("click", () => {
+    lsSet(K_ATK_CHAR, {
+      str: gv("str"),
+      dex: gv("dex"),
+      con: gv("con"),
+      neiliAttr: gv("neiliAttr"),
+      exp: gv("exp"),
+      jiaLi: gv("jiaLi"),
+      neiliTalAtk: gv("neiliTalAtk"),
+      neiliAttrAtk: gv("neiliAttrAtk"),
+      totalStr: gv("totalStr"),
+      CN: gv("CN"),
+    });
     lsSet(K_DEF_CHAR, {
       parryDef: gv("parryDef"),
       exp: gv("defExp"),
@@ -441,14 +499,19 @@ export async function showAvgQiAtkPresetModal({
       neiliAttrDef: gv("neiliAttrDef"),
     });
 
-    // 武学独立保存：武学配置
-    lsSet(K_SKILL(skillId), { weaponType: curWeaponType });
+    const af = gv("atkForce");
+    const df = gv("defForce");
+    const result = Math.round(
+      (8 *
+        (skillDamRate + (af * (1 + skillAvgAtkCoef) * skillDamRate) / 1000)) /
+        (1 + df / 1000),
+    );
 
-    // 武学独立保存：avgqiatk 结果
+    lsSet(K_SKILL(skillId), { weaponType: curWeaponType });
     lsSet(K_RESULT(skillId), result);
 
     onSave?.(result);
-    modal.close();
+    location.reload();
   });
 
   // 初始化刷新

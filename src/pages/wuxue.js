@@ -9,6 +9,9 @@ import {
   getFamilyValues,
   matchesFilters,
   filterState,
+  saveFilterState,
+  loadFilterState,
+  refreshActiveCount,
 } from "../components/FilterPanel.js";
 import { createSkillCard } from "../components/SkillCard.js";
 import {
@@ -22,6 +25,7 @@ import {
   loadVersion,
   getDataVersion,
 } from "../core/dataLoader.js";
+import { computeDefaultAvgQiAtk } from "../components/EffectDetailModal.js";
 import { setSkillLookup } from "../data/conditionParser.js";
 import { el, clearChildren, batchRender } from "../utils/dom.js";
 import { toast } from "../components/Toast.js";
@@ -30,6 +34,7 @@ let skillData = null;
 let activeSkillData = null;
 let skillAutoData = null;
 let bookSkillUnlockData = null;
+let weaponSpecialsData = null;
 let searchIndex = new Map();
 
 // === 并发控制 / 取消令牌 ===
@@ -88,6 +93,8 @@ async function initWuxuePage() {
 
   const container = document.getElementById("app");
 
+  loadFilterState();
+
   // 基本 UI 先行
   container.appendChild(el("h1", { class: "page-title" }, "武学技能查询"));
   const versionText = (await versionTask)?.version || "";
@@ -99,7 +106,11 @@ async function initWuxuePage() {
     ),
   );
   container.appendChild(createSearchBar(safeRefresh));
-  container.appendChild(createFilterPanel(safeRefresh));
+  container.appendChild(createFilterPanel(() => {
+    saveFilterState();
+    safeRefresh();
+  }));
+  refreshActiveCount();
   container.appendChild(
     el("div", { class: "stats-info", id: "statsInfo" }, "加载中..."),
   );
@@ -129,25 +140,25 @@ async function initWuxuePage() {
       "familyFilters",
       getFamilyValues(skillData.skills),
       "family",
-      safeRefresh,
+      () => { saveFilterState(); safeRefresh(); },
     );
     populateFilterBadges(
       "elementFilters",
       getUniqueValues(skillData.skills, "autoZhaoAtkDamageClass"),
       "element",
-      safeRefresh,
+      () => { saveFilterState(); safeRefresh(); },
     );
     populateFilterBadges(
       "parryFilters",
       getUniqueValues(skillData.skills, "zhaoJiaDefDamageClass"),
       "parry",
-      safeRefresh,
+      () => { saveFilterState(); safeRefresh(); },
     );
     populateFilterBadges(
       "methodsFilters",
       getUniqueValues(skillData.skills, "methods"),
       "methods",
-      safeRefresh,
+      () => { saveFilterState(); safeRefresh(); },
     );
 
     // 并行加载附加数据：失败不抛异常，单个失败不影响其他
@@ -167,13 +178,16 @@ function loadExtras() {
       loadResource("activeZhao"),
       loadResource("skillAuto"),
       loadResource("bookSkills"),
+      loadResource("weaponSpecials"),
     ]);
-    const [activeZhao, skillAuto, bookSkills] = results;
+    const [activeZhao, skillAuto, bookSkills, weaponSpecials] = results;
     activeSkillData =
       activeZhao.status === "fulfilled" ? activeZhao.value : null;
     skillAutoData = skillAuto.status === "fulfilled" ? skillAuto.value : null;
     bookSkillUnlockData =
       bookSkills.status === "fulfilled" ? bookSkills.value : null;
+    weaponSpecialsData =
+      weaponSpecials.status === "fulfilled" ? weaponSpecials.value : null;
 
     // 预构建 skillId → [activeSkillId...] 反向索引，供 findActiveSkills 与搜索索引 O(1) 查表
     if (activeSkillData?.skillRelation) {
@@ -292,7 +306,17 @@ function refreshList(seq) {
       "avgHitRate",
       "avgDuration",
     ]);
+    const outputMethodTypes = new Set(["1", "5", "6", "7", "8", "9", "10", "11"]);
     filteredSkills = filteredSkills.filter(([id, skill]) => {
+      if (filterState.sortField === "avgQiAtk") {
+        return skillAutoData?.[id] &&
+          Object.keys(skillAutoData[id]).length > 0 &&
+          skill.methods &&
+          String(skill.methods)
+            .split(",")
+            .map((t) => t.trim())
+            .some((t) => outputMethodTypes.has(t));
+      }
       if (passiveAvgFields.has(filterState.sortField)) {
         return skillAutoData?.[id] && Object.keys(skillAutoData[id]).length > 0;
       }
@@ -303,7 +327,51 @@ function refreshList(seq) {
     filteredSkills.sort(([idA, a], [idB, b]) => {
       const field = filterState.sortField;
       let valA, valB;
-      if (passiveAvgFields.has(field)) {
+      if (field === "avgQiAtk") {
+        const statsA = skillAutoData?.[idA];
+        const statsB = skillAutoData?.[idB];
+        if (!statsA || !statsB) return 0;
+        let totalA = 0, countA = 0;
+        Object.values(statsA).forEach((s) => {
+          totalA += s.atk || 0;
+          countA++;
+        });
+        let totalB = 0, countB = 0;
+        Object.values(statsB).forEach((s) => {
+          totalB += s.atk || 0;
+          countB++;
+        });
+        const avgAtkA = countA > 0 ? totalA / countA : 0;
+        const avgAtkB = countB > 0 ? totalB / countB : 0;
+
+        const skillCA = (() => {
+          try {
+            return JSON.parse(localStorage.getItem(`avgqiatk_skill_${idA}`)) || {};
+          } catch {
+            return {};
+          }
+        })();
+        const skillCB = (() => {
+          try {
+            return JSON.parse(localStorage.getItem(`avgqiatk_skill_${idB}`)) || {};
+          } catch {
+            return {};
+          }
+        })();
+
+        valA = computeDefaultAvgQiAtk(
+          a,
+          avgAtkA,
+          weaponSpecialsData || [],
+          skillCA.weaponType || "",
+        );
+        valB = computeDefaultAvgQiAtk(
+          b,
+          avgAtkB,
+          weaponSpecialsData || [],
+          skillCB.weaponType || "",
+        );
+      } else if (passiveAvgFields.has(field)) {
         const statsA = skillAutoData?.[idA];
         const statsB = skillAutoData?.[idB];
         if (!statsA || !statsB) return 0;

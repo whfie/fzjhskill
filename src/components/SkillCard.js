@@ -8,6 +8,9 @@ import {
   getFamilyName,
 } from "../data/mappings.js";
 import { findActiveSkills, getPassiveStats } from "./SkillDetailModal.js";
+import { computeDefaultAvgQiAtk } from "./EffectDetailModal.js";
+import { loadResource } from "../core/dataLoader.js";
+import { showAvgQiAtkPresetModal } from "./AvgQiAtkPresetModal.js";
 
 export function createSkillCard(id, skill, onAction, data) {
   const { activeSkillData, skillAutoData } = data || {};
@@ -226,6 +229,75 @@ export function createSkillCard(id, skill, onAction, data) {
         ]),
       );
     });
+  }
+
+  // 气血攻击参考（仅输出武学显示，每次重新计算）
+  const outputMethodTypes = new Set(["1", "5", "6", "7", "8", "9", "10", "11"]);
+  const isOutputMethod =
+    skill.methods &&
+    String(skill.methods)
+      .split(",")
+      .map((t) => t.trim())
+      .some((t) => outputMethodTypes.has(t));
+  if (isOutputMethod && passiveStats) {
+    const skillC = (() => {
+      try {
+        return JSON.parse(localStorage.getItem(`avgqiatk_skill_${id}`)) || {};
+      } catch {
+        return {};
+      }
+    })();
+    const weaponType = skillC.weaponType || "";
+
+    loadResource("weaponSpecials")
+      .then((wsData) => {
+        const weaponSpecials = wsData && typeof wsData === "object" ? wsData : [];
+        const avgQiAtk = computeDefaultAvgQiAtk(
+          skill,
+          passiveStats.avgAtk,
+          weaponSpecials,
+          weaponType,
+        );
+        const avgQiAtkEl = el("div", { class: "attr-item attr-item-highlight", title: "点击打开预设配置" }, [
+          el("span", { class: "attr-label" }, "气血攻击参考"),
+          el("span", { class: "attr-value" }, avgQiAtk),
+        ]);
+        avgQiAtkEl.addEventListener("click", (e) => {
+          e.stopPropagation();
+          showAvgQiAtkPresetModal({
+            skillId: id,
+            skill: skill,
+            avgAtk: passiveStats.avgAtk,
+            onSave: () => {},
+            fromCard: true,
+          });
+        });
+        attrList.appendChild(avgQiAtkEl);
+        if (!body.contains(attrList)) {
+          body.appendChild(attrList);
+        }
+      })
+      .catch(() => {
+        const avgQiAtk = computeDefaultAvgQiAtk(skill, passiveStats.avgAtk);
+        const avgQiAtkEl = el("div", { class: "attr-item attr-item-highlight", title: "点击打开预设配置" }, [
+          el("span", { class: "attr-label" }, "气血攻击参考"),
+          el("span", { class: "attr-value" }, avgQiAtk),
+        ]);
+        avgQiAtkEl.addEventListener("click", (e) => {
+          e.stopPropagation();
+          showAvgQiAtkPresetModal({
+            skillId: id,
+            skill: skill,
+            avgAtk: passiveStats.avgAtk,
+            onSave: () => {},
+            fromCard: true,
+          });
+        });
+        attrList.appendChild(avgQiAtkEl);
+        if (!body.contains(attrList)) {
+          body.appendChild(attrList);
+        }
+      });
   }
 
   if (attrList.firstChild) body.appendChild(attrList);
