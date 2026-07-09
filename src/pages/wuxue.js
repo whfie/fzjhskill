@@ -106,10 +106,12 @@ async function initWuxuePage() {
     ),
   );
   container.appendChild(createSearchBar(safeRefresh));
-  container.appendChild(createFilterPanel(() => {
-    saveFilterState();
-    safeRefresh();
-  }));
+  container.appendChild(
+    createFilterPanel(() => {
+      saveFilterState();
+      safeRefresh();
+    }),
+  );
   refreshActiveCount();
   container.appendChild(
     el("div", { class: "stats-info", id: "statsInfo" }, "加载中..."),
@@ -140,25 +142,46 @@ async function initWuxuePage() {
       "familyFilters",
       getFamilyValues(skillData.skills),
       "family",
-      () => { saveFilterState(); safeRefresh(); },
+      () => {
+        saveFilterState();
+        safeRefresh();
+      },
+    );
+    populateFilterBadges(
+      "wxClassifyFilters",
+      ["quan", "zhang", "zhi", "zhua", "tui"],
+      "wxClassify",
+      () => {
+        saveFilterState();
+        safeRefresh();
+      },
     );
     populateFilterBadges(
       "elementFilters",
       getUniqueValues(skillData.skills, "autoZhaoAtkDamageClass"),
       "element",
-      () => { saveFilterState(); safeRefresh(); },
+      () => {
+        saveFilterState();
+        safeRefresh();
+      },
     );
     populateFilterBadges(
       "parryFilters",
       getUniqueValues(skillData.skills, "zhaoJiaDefDamageClass"),
       "parry",
-      () => { saveFilterState(); safeRefresh(); },
+      () => {
+        saveFilterState();
+        safeRefresh();
+      },
     );
     populateFilterBadges(
       "methodsFilters",
       getUniqueValues(skillData.skills, "methods"),
       "methods",
-      () => { saveFilterState(); safeRefresh(); },
+      () => {
+        saveFilterState();
+        safeRefresh();
+      },
     );
 
     // 并行加载附加数据：失败不抛异常，单个失败不影响其他
@@ -293,10 +316,10 @@ function refreshList(seq) {
   const totalCount = Object.keys(skillData.skills).length;
 
   let filteredSkills = Object.entries(skillData.skills).filter(
-    ([, skill]) =>
+    ([id, skill]) =>
       typeof skill === "object" &&
       skill !== null &&
-      matchesFilters(skill, searchText, searchIndex),
+      matchesFilters(id, skill, searchText, searchIndex),
   );
 
   if (filterState.sortField) {
@@ -306,16 +329,27 @@ function refreshList(seq) {
       "avgHitRate",
       "avgDuration",
     ]);
-    const outputMethodTypes = new Set(["1", "5", "6", "7", "8", "9", "10", "11"]);
+    const outputMethodTypes = new Set([
+      "1",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+    ]);
     filteredSkills = filteredSkills.filter(([id, skill]) => {
       if (filterState.sortField === "avgQiAtk") {
-        return skillAutoData?.[id] &&
+        return (
+          skillAutoData?.[id] &&
           Object.keys(skillAutoData[id]).length > 0 &&
           skill.methods &&
           String(skill.methods)
             .split(",")
             .map((t) => t.trim())
-            .some((t) => outputMethodTypes.has(t));
+            .some((t) => outputMethodTypes.has(t))
+        );
       }
       if (passiveAvgFields.has(filterState.sortField)) {
         return skillAutoData?.[id] && Object.keys(skillAutoData[id]).length > 0;
@@ -331,12 +365,14 @@ function refreshList(seq) {
         const statsA = skillAutoData?.[idA];
         const statsB = skillAutoData?.[idB];
         if (!statsA || !statsB) return 0;
-        let totalA = 0, countA = 0;
+        let totalA = 0,
+          countA = 0;
         Object.values(statsA).forEach((s) => {
           totalA += s.atk || 0;
           countA++;
         });
-        let totalB = 0, countB = 0;
+        let totalB = 0,
+          countB = 0;
         Object.values(statsB).forEach((s) => {
           totalB += s.atk || 0;
           countB++;
@@ -346,14 +382,18 @@ function refreshList(seq) {
 
         const skillCA = (() => {
           try {
-            return JSON.parse(localStorage.getItem(`avgqiatk_skill_${idA}`)) || {};
+            return (
+              JSON.parse(localStorage.getItem(`avgqiatk_skill_${idA}`)) || {}
+            );
           } catch {
             return {};
           }
         })();
         const skillCB = (() => {
           try {
-            return JSON.parse(localStorage.getItem(`avgqiatk_skill_${idB}`)) || {};
+            return (
+              JSON.parse(localStorage.getItem(`avgqiatk_skill_${idB}`)) || {}
+            );
           } catch {
             return {};
           }
@@ -375,7 +415,10 @@ function refreshList(seq) {
         const statsA = skillAutoData?.[idA];
         const statsB = skillAutoData?.[idB];
         if (!statsA || !statsB) return 0;
-        let totalA = 0, totalB = 0, countA = 0, countB = 0;
+        let totalA = 0,
+          totalB = 0,
+          countA = 0,
+          countB = 0;
         Object.values(statsA).forEach((s) => {
           if (field === "avgDuration") {
             totalA += (s.preDuration || 0) + (s.aftDuration || 0);

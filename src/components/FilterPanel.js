@@ -4,6 +4,8 @@ import {
   getElementName,
   getMethodName,
   getFamilyName,
+  NPC_SKILLS,
+  getWxClassifyName,
 } from "../data/mappings.js";
 
 export const filterState = {
@@ -11,6 +13,7 @@ export const filterState = {
   element: new Set(),
   parry: new Set(),
   methods: new Set(),
+  wxClassify: new Set(),
   isJueXue: false,
   isZhiShi: false,
   sortField: null,
@@ -26,6 +29,7 @@ export function saveFilterState() {
       element: Array.from(filterState.element),
       parry: Array.from(filterState.parry),
       methods: Array.from(filterState.methods),
+      wxClassify: Array.from(filterState.wxClassify),
       isJueXue: filterState.isJueXue,
       isZhiShi: filterState.isZhiShi,
       sortField: filterState.sortField,
@@ -48,6 +52,8 @@ export function loadFilterState() {
       filterState.parry = new Set(state.parry.map((v) => String(v)));
     if (state.methods && Array.isArray(state.methods))
       filterState.methods = new Set(state.methods.map((v) => String(v)));
+    if (state.wxClassify && Array.isArray(state.wxClassify))
+      filterState.wxClassify = new Set(state.wxClassify.map((v) => String(v)));
     if (state.isJueXue !== undefined) filterState.isJueXue = state.isJueXue;
     if (state.isZhiShi !== undefined) filterState.isZhiShi = state.isZhiShi;
     if (state.sortField !== undefined) filterState.sortField = state.sortField;
@@ -62,6 +68,7 @@ export function refreshActiveCount() {
     filterState.element.size +
     filterState.parry.size +
     filterState.methods.size +
+    filterState.wxClassify.size +
     (filterState.isJueXue ? 1 : 0) +
     (filterState.isZhiShi ? 1 : 0) +
     (filterState.sortField ? 1 : 0);
@@ -211,6 +218,7 @@ export function createFilterPanel(onChange) {
     createFilterGroup("elementFilters", "伤害属性", "element", onChange),
     createFilterGroup("parryFilters", "招架属性", "parry", onChange),
     createFilterGroup("methodsFilters", "武学类型", "methods", onChange),
+    createFilterGroup("wxClassifyFilters", "拳脚分支", "wxClassify", onChange),
     createToggleGroup("特殊筛选", onChange),
     createSortGroup(onChange),
   ]);
@@ -300,7 +308,9 @@ export function populateFilterBadges(
           ? getMethodName
           : filterType === "family"
             ? (v) => getFamilyName(v) || v
-            : (v) => v;
+            : filterType === "wxClassify"
+              ? (v) => getWxClassifyName(v) || v
+              : (v) => v;
     const isActive = filterState[filterType].has(value);
     const badge = el(
       "span",
@@ -341,7 +351,11 @@ export function getUniqueValues(skills, key) {
 
 export function getFamilyValues(skills) {
   const values = new Set();
-  Object.values(skills).forEach((skill) => {
+  Object.entries(skills).forEach(([id, skill]) => {
+    if (NPC_SKILLS.has(id)) {
+      values.add("NPC");
+      return;
+    }
     if (skill.familyList === "门派心法") {
       values.add("门派心法");
       return;
@@ -359,7 +373,7 @@ export function getFamilyValues(skills) {
   return Array.from(values).filter(Boolean);
 }
 
-export function matchesFilters(skill, searchText, searchIndex) {
+export function matchesFilters(id, skill, searchText, searchIndex) {
   // 搜索匹配
   const searchMatch =
     !searchText ||
@@ -370,13 +384,14 @@ export function matchesFilters(skill, searchText, searchIndex) {
 
   let activeSkillMatch = !searchText;
   if (searchText && !searchMatch) {
-    const indexed = searchIndex?.get(skill.id);
+    const indexed = searchIndex?.get(id);
     if (indexed && indexed.includes(searchText.toLowerCase()))
       activeSkillMatch = true;
   }
 
-  const familyList =
-    skill.familyList === "门派心法"
+  const familyList = NPC_SKILLS.has(id)
+    ? ["NPC"]
+    : skill.familyList === "门派心法"
       ? ["门派心法"]
       : (() => {
           const familyRaw = skill.familyId || skill.familyList;
@@ -411,6 +426,12 @@ export function matchesFilters(skill, searchText, searchIndex) {
       String(skill.methods)
         .split(",")
         .some((item) => filterState.methods.has(item)));
+  const wxClassifyMatch =
+    filterState.wxClassify.size === 0 ||
+    (skill.wxclassify &&
+      String(skill.wxclassify)
+        .split(",")
+        .some((item) => filterState.wxClassify.has(item)));
 
   return (
     (searchMatch || activeSkillMatch) &&
@@ -419,7 +440,8 @@ export function matchesFilters(skill, searchText, searchIndex) {
     zhishiMatch &&
     elementMatch &&
     parryMatch &&
-    methodsMatch
+    methodsMatch &&
+    wxClassifyMatch
   );
 }
 
@@ -428,6 +450,7 @@ export function clearAllFilters() {
   filterState.element.clear();
   filterState.parry.clear();
   filterState.methods.clear();
+  filterState.wxClassify.clear();
   filterState.isJueXue = false;
   filterState.isZhiShi = false;
   filterState.sortField = null;

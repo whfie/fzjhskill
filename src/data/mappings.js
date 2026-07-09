@@ -222,6 +222,38 @@ export function getFamilyName(id) {
   return FAMILY_NAMES[FAMILY_ALIAS[id] || id] || "";
 }
 
+export const NPC_SKILLS = new Set([
+  "chunfengkuaiyidaofa1",
+  "yitianjianfa1",
+  "tianmozhi1",
+  "duzhuojianfa1",
+  "luoyuejianfa1",
+  "qingdianzilei1",
+  "riyuelun1",
+  "lunhuijianfa2",
+  "baiyuanjianfa1",
+  "weituochu",
+  "jiangwangguibu",
+  "lanyeshenzhang",
+  "taixuangong2",
+  "weijinxinfa",
+  "wuqituifa",
+  "bawangqiangfa",
+  "mingyugong",
+]);
+
+export const WX_CLASSIFY = {
+  quan: "拳",
+  zhang: "掌",
+  zhi: "指",
+  zhua: "爪",
+  tui: "腿",
+};
+
+export function getWxClassifyName(id) {
+  return WX_CLASSIFY[id] || "";
+}
+
 // 资源名映射
 export const RESOURCE_NAMES = {
   money: "碎银",

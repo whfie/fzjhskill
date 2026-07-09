@@ -6,6 +6,8 @@ import {
   getWeaponType,
   SKILL_ATTRIBUTES,
   getFamilyName,
+  NPC_SKILLS,
+  getWxClassifyName,
 } from "../data/mappings.js";
 import { findActiveSkills, getPassiveStats } from "./SkillDetailModal.js";
 import { computeDefaultAvgQiAtk } from "./EffectDetailModal.js";
@@ -62,12 +64,12 @@ export function createSkillCard(id, skill, onAction, data) {
   );
 
   // 标题行：标题文字 + [展开按钮（从左滑入） + 徽章] 整体右对齐 + 指示器
+  const isNpcSkill = NPC_SKILLS.has(id);
+  const titleText = isNpcSkill
+    ? `${skill.name || id}（NPC）`
+    : skill.name || id;
   const headerMain = el("div", { class: "header-main-row" }, [
-    el(
-      "span",
-      { class: "skill-card-title", title: skill.name || id },
-      skill.name || id,
-    ),
+    el("span", { class: "skill-card-title", title: titleText }, titleText),
     el("div", { class: "header-right-group" }, [
       toggleBar,
       el("div", { class: "skill-card-badges" }, headerBadges),
@@ -109,40 +111,58 @@ export function createSkillCard(id, skill, onAction, data) {
 
   // 门派
   const useFamilyListDirect = skill.familyList === "门派心法";
-  const families = useFamilyListDirect
-    ? [skill.familyList]
-    : skill.familyId
-      ? String(skill.familyId)
-          .split("#")
-          .map((f) => f.trim())
-          .filter(Boolean)
-          .map((f) => getFamilyName(f) || f)
-      : skill.familyList
-        ? String(skill.familyList)
-            .split(",")
+  const families = isNpcSkill
+    ? ["NPC"]
+    : useFamilyListDirect
+      ? [skill.familyList]
+      : skill.familyId
+        ? String(skill.familyId)
+            .split("#")
             .map((f) => f.trim())
             .filter(Boolean)
-        : [];
+            .map((f) => getFamilyName(f) || f)
+        : skill.familyList
+          ? String(skill.familyList)
+              .split(",")
+              .map((f) => f.trim())
+              .filter(Boolean)
+          : [];
   if (families.length > 0) {
     body.appendChild(
       el("div", { class: "skill-meta-row" }, [
         el("span", { class: "skill-meta-label" }, "门派："),
-        ...families.map((f) =>
-          el("span", { class: "badge badge-info" }, f),
-        ),
+        ...families.map((f) => el("span", { class: "badge badge-info" }, f)),
       ]),
     );
   }
 
-  // 武学类型
+  // 武学类型（methods + wxclassify拳脚属性）
+  const typeBadges = [];
   if (skill.methods) {
-    const methods = String(skill.methods)
+    String(skill.methods)
       .split(",")
-      .map((m) => getMethodName(m.trim()));
+      .map((m) => m.trim())
+      .forEach((m) => {
+        const name = getMethodName(m);
+        if (name) typeBadges.push(name);
+      });
+  }
+  if (skill.wxclassify) {
+    String(skill.wxclassify)
+      .split(",")
+      .map((c) => c.trim())
+      .forEach((c) => {
+        const name = getWxClassifyName(c);
+        if (name) typeBadges.push(name);
+      });
+  }
+  if (typeBadges.length > 0) {
     body.appendChild(
       el("div", { class: "skill-meta-row" }, [
         el("span", { class: "skill-meta-label" }, "类型："),
-        ...methods.map((m) => el("span", { class: "badge badge-success" }, m)),
+        ...typeBadges.map((t) =>
+          el("span", { class: "badge badge-success" }, t),
+        ),
       ]),
     );
   }
@@ -251,17 +271,22 @@ export function createSkillCard(id, skill, onAction, data) {
 
     loadResource("weaponSpecials")
       .then((wsData) => {
-        const weaponSpecials = wsData && typeof wsData === "object" ? wsData : [];
+        const weaponSpecials =
+          wsData && typeof wsData === "object" ? wsData : [];
         const avgQiAtk = computeDefaultAvgQiAtk(
           skill,
           passiveStats.avgAtk,
           weaponSpecials,
           weaponType,
         );
-        const avgQiAtkEl = el("div", { class: "attr-item attr-item-highlight", title: "点击打开预设配置" }, [
-          el("span", { class: "attr-label" }, "气血攻击参考"),
-          el("span", { class: "attr-value" }, avgQiAtk),
-        ]);
+        const avgQiAtkEl = el(
+          "div",
+          { class: "attr-item attr-item-highlight", title: "点击打开预设配置" },
+          [
+            el("span", { class: "attr-label" }, "气血攻击参考"),
+            el("span", { class: "attr-value" }, avgQiAtk),
+          ],
+        );
         avgQiAtkEl.addEventListener("click", (e) => {
           e.stopPropagation();
           showAvgQiAtkPresetModal({
@@ -279,10 +304,14 @@ export function createSkillCard(id, skill, onAction, data) {
       })
       .catch(() => {
         const avgQiAtk = computeDefaultAvgQiAtk(skill, passiveStats.avgAtk);
-        const avgQiAtkEl = el("div", { class: "attr-item attr-item-highlight", title: "点击打开预设配置" }, [
-          el("span", { class: "attr-label" }, "气血攻击参考"),
-          el("span", { class: "attr-value" }, avgQiAtk),
-        ]);
+        const avgQiAtkEl = el(
+          "div",
+          { class: "attr-item attr-item-highlight", title: "点击打开预设配置" },
+          [
+            el("span", { class: "attr-label" }, "气血攻击参考"),
+            el("span", { class: "attr-value" }, avgQiAtk),
+          ],
+        );
         avgQiAtkEl.addEventListener("click", (e) => {
           e.stopPropagation();
           showAvgQiAtkPresetModal({
