@@ -99,6 +99,8 @@ export async function showAvgQiAtkPresetModal({
   };
   const DD = {
     parryDef: 90,
+    parryLevel: 1100,
+    isForgotten: false,
     exp: 40,
     dex: 130,
     neiliTalDef: 10,
@@ -106,6 +108,8 @@ export async function showAvgQiAtkPresetModal({
   };
 
   let curWeaponType = skillC.weaponType ?? "";
+  let savedParryDef = null;
+  let savedParryLevel = null;
 
   // 弹窗
   const modal = new Modal({ title: "预设配置 — 平均气血攻击", size: "lg" });
@@ -225,6 +229,12 @@ export async function showAvgQiAtkPresetModal({
     ),
   );
   defGrid.appendChild(
+    mkField(
+      "招架等级",
+      mkInput("parryLevel", defC.parryLevel ?? DD.parryLevel),
+    ),
+  );
+  defGrid.appendChild(
     mkField("人物经验", mkInput("defExp", defC.exp ?? DD.exp), "亿"),
   );
   defGrid.appendChild(
@@ -244,6 +254,47 @@ export async function showAvgQiAtkPresetModal({
     ),
   );
   body.appendChild(defGrid);
+
+  // 防守方被遗忘切换
+  const forgottenInput = el("input", {
+    type: "checkbox",
+    checked: defC.isForgotten ?? DD.isForgotten,
+  });
+  const forgottenToggle = el("div", { class: "preset-forgotten-toggle" }, [
+    el("span", {}, "防守方被遗忘"),
+    el("label", { class: "toggle-switch" }, [
+      forgottenInput,
+      el("span", { class: "toggle-slider" }),
+    ]),
+  ]);
+  body.appendChild(forgottenToggle);
+
+  // 切换逻辑
+  function applyForgottenState(isForgotten) {
+    if (isForgotten) {
+      savedParryDef = gv("parryDef");
+      savedParryLevel = gv("parryLevel");
+      inp.parryDef.value = "50";
+      inp.parryLevel.value = "0";
+      inp.parryDef.disabled = true;
+      inp.parryLevel.disabled = true;
+      inp.parryDef.parentElement.classList.add("disabled");
+      inp.parryLevel.parentElement.classList.add("disabled");
+    } else {
+      if (savedParryDef !== null) inp.parryDef.value = String(savedParryDef);
+      if (savedParryLevel !== null)
+        inp.parryLevel.value = String(savedParryLevel);
+      inp.parryDef.disabled = false;
+      inp.parryLevel.disabled = false;
+      inp.parryDef.parentElement.classList.remove("disabled");
+      inp.parryLevel.parentElement.classList.remove("disabled");
+    }
+    doUpdate();
+  }
+
+  forgottenInput.addEventListener("change", (e) => {
+    applyForgottenState(e.target.checked);
+  });
 
   // ===== Section 4: 属性参考 =====
   body.appendChild(secHead("属性参考"));
@@ -289,7 +340,7 @@ export async function showAvgQiAtkPresetModal({
       class: "btn btn-outline btn-sm",
       title: "将当前人物配置保存为全局预设参数",
     },
-    "参数保存为预设",
+    "保存预设",
   );
   const saveResultBtn = el(
     "button",
@@ -298,7 +349,7 @@ export async function showAvgQiAtkPresetModal({
       title: "保存当前武学的平均气血攻击计算结果",
       style: fromCard ? "display: none" : "",
     },
-    "保存计算结果",
+    "保存结果",
   );
   const saveAllBtn = el(
     "button",
@@ -307,7 +358,7 @@ export async function showAvgQiAtkPresetModal({
       title: "同时保存预设参数和计算结果",
       style: fromCard ? "display: none" : "",
     },
-    "保存预设和计算结果",
+    "全部保存",
   );
   btnRow.appendChild(savePresetBtn);
   btnRow.appendChild(saveResultBtn);
@@ -378,14 +429,32 @@ export async function showAvgQiAtkPresetModal({
     );
 
     const parryDef = gv("parryDef");
+    const parryLevel = gv("parryLevel");
     const defExpVal = gv("defExp");
     const defDex = gv("defDex");
     const talDef = gv("neiliTalDef");
     const attrDef = gv("neiliAttrDef");
     const defExpPow = Math.pow(defExpVal * 1e8, 0.4);
+
+    const isForgotten = forgottenInput.checked;
+    const effectiveParryDef = isForgotten ? 50 : parryDef;
+    const effectiveParryLevel = isForgotten ? 0 : parryLevel;
+
     const baseDef =
-      ((5 * 1650 * parryDef) / 120 + defExpPow + 10) * (1.35 + defDex / 200);
-    const refDef = Math.round(baseDef * (1 + talDef / 100) + attrDef);
+      ((5 * (550 + effectiveParryLevel) * effectiveParryDef) / 120 +
+        defExpPow +
+        10) *
+      (1.35 + defDex / 200);
+
+    let refDef;
+    if (isForgotten && savedParryDef !== null) {
+      const baseDefOriginal =
+        ((5 * (550 + savedParryLevel) * savedParryDef) / 120 + defExpPow + 10) *
+        (1.35 + defDex / 200);
+      refDef = Math.round(baseDef + (baseDefOriginal * talDef) / 100 + attrDef);
+    } else {
+      refDef = Math.round(baseDef * (1 + talDef / 100) + attrDef);
+    }
 
     return { refAtk, refDef };
   }
@@ -451,7 +520,15 @@ export async function showAvgQiAtkPresetModal({
       CN: gv("CN"),
     });
     lsSet(K_DEF_CHAR, {
-      parryDef: gv("parryDef"),
+      parryDef:
+        forgottenInput.checked && savedParryDef !== null
+          ? savedParryDef
+          : gv("parryDef"),
+      parryLevel:
+        forgottenInput.checked && savedParryLevel !== null
+          ? savedParryLevel
+          : gv("parryLevel"),
+      isForgotten: forgottenInput.checked,
       exp: gv("defExp"),
       dex: gv("defDex"),
       neiliTalDef: gv("neiliTalDef"),
@@ -492,7 +569,15 @@ export async function showAvgQiAtkPresetModal({
       CN: gv("CN"),
     });
     lsSet(K_DEF_CHAR, {
-      parryDef: gv("parryDef"),
+      parryDef:
+        forgottenInput.checked && savedParryDef !== null
+          ? savedParryDef
+          : gv("parryDef"),
+      parryLevel:
+        forgottenInput.checked && savedParryLevel !== null
+          ? savedParryLevel
+          : gv("parryLevel"),
+      isForgotten: forgottenInput.checked,
       exp: gv("defExp"),
       dex: gv("defDex"),
       neiliTalDef: gv("neiliTalDef"),
@@ -513,6 +598,9 @@ export async function showAvgQiAtkPresetModal({
     onSave?.(result);
     location.reload();
   });
+
+  // 初始化时应用遗忘状态
+  applyForgottenState(defC.isForgotten ?? DD.isForgotten);
 
   // 初始化刷新
   doUpdate();
