@@ -390,6 +390,7 @@ export const CALC_PARAM_NAMES = {
   combatStack10num: "驱霆层数（上限10）",
   combatStack11num: "苏生层数（上限10）",
   combatStack13num: "速朽层数（上限40）",
+  combatStack13num2: "速朽层数（上限40）",
   combatStack22num: "隐逸层数（上限5）",
   combatStack24num: "业因层数（上限10）",
   combatStack26num: "乱脉层数（上限9）",
@@ -432,6 +433,24 @@ export const CALC_SELECT_PARAMS = [
   {
     pattern: /^combatStack27num$/,
     label: "【通明】效果",
+    options: [
+      { label: "无", value: 0 },
+      { label: "有", value: 1 },
+    ],
+    default: 0,
+  },
+  {
+    pattern: /^combatStack30num$/,
+    label: "【蚀髓】效果",
+    options: [
+      { label: "无", value: 0 },
+      { label: "有", value: 1 },
+    ],
+    default: 0,
+  },
+  {
+    pattern: /^combatStack30num2$/,
+    label: "【蚀髓】效果",
     options: [
       { label: "无", value: 0 },
       { label: "有", value: 1 },

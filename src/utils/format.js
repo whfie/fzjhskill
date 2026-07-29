@@ -31,6 +31,9 @@ export function escapeHtml(str) {
 }
 
 // 解析 effects 字符串生成效果链接数据
+// 支持两种格式：
+//   1) effects 字段: {"ID",z1,z2,...};{"ID2",z1,z2,...}
+//   2) effectId 字段（入场/被动效果）: ID#z1#z2#z3#z4|ID2#z1#z2#z3#z4
 export function parseEffects(effectsStr) {
   if (!effectsStr) return [];
   const effects = [];
@@ -43,6 +46,17 @@ export function parseEffects(effectsStr) {
       zValues = match[2].trim().substring(1);
     }
     effects.push({ id, z: zValues });
+  }
+  // effectId 字段格式：ID#z1#z2#...，多项以 | 分隔
+  if (effects.length === 0 && effectsStr.includes('#')) {
+    for (const part of effectsStr.split('|')) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+      const segments = trimmed.split('#');
+      const id = segments[0];
+      if (!id) continue;
+      effects.push({ id, z: segments.slice(1).join(',') });
+    }
   }
   return effects;
 }
