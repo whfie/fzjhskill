@@ -395,6 +395,8 @@ export const CALC_PARAM_NAMES = {
   combatStack26num: "乱脉层数（上限9）",
   fragile4num: "毒蛊层数（上限16）",
   fragile5num: "和息层数（上限4）",
+  combatStack28num: "炽鳞加成",
+  combatStack29num: "凭风加成",
 };
 
 // 选择框参数配置
