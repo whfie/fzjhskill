@@ -1023,6 +1023,43 @@
   line-height: 1.6;
 }
 
+/* 熟练度要求展示（各重数差异） */
+.proficiency-req {
+  margin-top: 2px;
+}
+.prof-req-val {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.prof-req-edit {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.prof-req-edit:hover {
+  color: var(--accent-hover);
+}
+
+/* 悟性输入弹窗 */
+.wuxing-input-wrap {
+  padding: 4px 0;
+}
+.wuxing-input-hint {
+  margin: 0 0 12px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.wuxing-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
 .effect-link {
   color: var(--accent);
   text-decoration: underline;

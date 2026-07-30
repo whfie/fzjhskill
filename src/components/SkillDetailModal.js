@@ -10,6 +10,92 @@ import { showEffectDetail } from "./EffectDetailModal.js";
 import { parseEffects } from "../utils/format.js";
 import { toast } from "./Toast.js";
 
+// ===== 悟性缓存（熟练度要求计算用） =====
+const K_WUXING = "wuxing"; // 悟性全局缓存
+const DEFAULT_WUXING = 115;
+
+function getWuxing() {
+  const v = parseInt(localStorage.getItem(K_WUXING), 10);
+  return isNaN(v) || v <= 0 ? DEFAULT_WUXING : v;
+}
+function setWuxing(v) {
+  const n = parseInt(v, 10);
+  if (isNaN(n) || n <= 0) return false;
+  localStorage.setItem(K_WUXING, String(n));
+  return true;
+}
+
+// 熟练度要求 = 3000 × 重数³ / 悟性加成后的转化率
+// 悟性加成后的转化率 = 潜能效率 × (200 + 悟性) / 200
+function calcProficiencyReq(level, potEfficiency, wuxing) {
+  const pe = parseFloat(potEfficiency);
+  if (!isFinite(pe) || pe <= 0) return null;
+  const rate = (pe * (200 + wuxing)) / 200;
+  if (rate <= 0) return null;
+  return Math.round((3000 * Math.pow(level, 3)) / rate);
+}
+
+// 刷新容器内所有熟练度要求展示
+function refreshProficiencyReqs(container, potEfficiency, wuxing) {
+  if (!container) return;
+  container.querySelectorAll(".proficiency-req").forEach((node) => {
+    const level = parseInt(node.dataset.level, 10);
+    if (isNaN(level)) return;
+    const req = calcProficiencyReq(level, potEfficiency, wuxing);
+    if (req == null) {
+      node.style.display = "none";
+      return;
+    }
+    node.style.display = "";
+    const valEl = node.querySelector(".prof-req-val");
+    const wuxEl = node.querySelector(".prof-req-wuxing");
+    if (valEl) valEl.textContent = req.toLocaleString();
+    if (wuxEl) wuxEl.textContent = String(wuxing);
+  });
+}
+
+// 悟性输入弹窗
+function showWuxingInputModal(currentWuxing, onSave) {
+  const modal = new Modal({ title: "修改悟性", size: "sm" });
+  const body = modal.getBody();
+  const input = el("input", {
+    type: "number",
+    class: "wuxing-input",
+    value: String(currentWuxing),
+    min: "1",
+  });
+  body.appendChild(
+    el("div", { class: "wuxing-input-wrap" }, [
+      el("p", { class: "wuxing-input-hint" }, [
+        "悟性影响熟练度要求的转化率，修改后将保存到缓存。",
+      ]),
+      el("div", { class: "calc-field" }, [
+        el("label", {}, "悟性"),
+        input,
+      ]),
+    ]),
+  );
+  modal.setFooter([
+    { text: "取消", variant: "btn-outline", onClick: () => modal.close() },
+    {
+      text: "保存",
+      variant: "btn-primary",
+      onClick: () => {
+        const v = parseInt(input.value, 10);
+        if (isNaN(v) || v <= 0) {
+          toast("请输入有效的悟性数值", "warning", 1500);
+          return;
+        }
+        if (onSave) onSave(v);
+        modal.close();
+      },
+    },
+  ]);
+  modal.show();
+  input.focus();
+  input.select();
+}
+
 // 查找关联的主动技能
 export function findActiveSkills(skillId, activeSkillData) {
   if (!activeSkillData?.skillRelation) return [];
@@ -156,13 +242,6 @@ export function showActiveSkillModal(
   });
   const body = modal.getBody();
 
-  const groupEl = renderActiveSkillGroup(
-    group,
-    activeSkillData,
-    bookSkillUnlockData,
-  );
-  body.appendChild(groupEl);
-
   // 构造技能上下文传递给效果详情
   const { skill, skillAutoData, skillId } = extraOpts;
   const passiveStats =
@@ -170,6 +249,14 @@ export function showActiveSkillModal(
       ? getPassiveStats(skillId, skillAutoData)
       : null;
   const skillOpts = { skillId, skill, avgAtk: passiveStats?.avgAtk };
+
+  const groupEl = renderActiveSkillGroup(
+    group,
+    activeSkillData,
+    bookSkillUnlockData,
+    skillOpts,
+  );
+  body.appendChild(groupEl);
 
   bindEffectLinks(body, activeSkillData, skillOpts);
   modal.show();
@@ -195,17 +282,17 @@ export function showAllActiveSkillsModal(
   });
   const body = modal.getBody();
 
-  groups.forEach((group) => {
-    body.appendChild(
-      renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData),
-    );
-  });
-
   // 构造技能上下文传递给效果详情
   const { skill, skillAutoData } = extraOpts;
   const passiveStats =
     skill && skillAutoData ? getPassiveStats(skillId, skillAutoData) : null;
   const skillOpts = { skillId, skill, avgAtk: passiveStats?.avgAtk };
+
+  groups.forEach((group) => {
+    body.appendChild(
+      renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData, skillOpts),
+    );
+  });
 
   bindEffectLinks(body, activeSkillData, skillOpts);
   modal.show();
@@ -231,9 +318,11 @@ function findActiveSkillsByActiveId(activeId, activeSkillData) {
 }
 
 // 渲染单个主动技能组（复用原逻辑）
-function renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData) {
+function renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData, skillOpts = {}) {
   const { activeId, baseActive, allActives } = group;
   const groupEl = el("div", { class: "active-skill-group" });
+  // 该武学的潜能效率（用于计算各重熟练度要求）
+  const potEfficiency = parseFloat(skillOpts?.skill?.potEfficiency) || 0;
 
   // 头部
   const typeBadge = baseActive.type
@@ -391,6 +480,27 @@ function renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData) {
           }
         });
 
+      // 熟练度要求：3000 × 重数³ / 悟性加成后的转化率
+      const wuxing = getWuxing();
+      const req = calcProficiencyReq(skill.level, potEfficiency, wuxing);
+      if (req != null) {
+        parts.push(
+          el(
+            "div",
+            { class: "proficiency-req", dataset: { level: skill.level } },
+            [
+              el("span", { class: "text-muted text-xs" }, "熟练度要求："),
+              el("span", { class: "prof-req-val" }, req.toLocaleString()),
+              "（",
+              el("span", { class: "prof-req-wuxing" }, String(wuxing)),
+              "悟性，",
+              el("span", { class: "prof-req-edit" }, "点击修改"),
+              "）",
+            ],
+          ),
+        );
+      }
+
       const isHidden = index < 8;
       levelSection.appendChild(
         el(
@@ -410,6 +520,18 @@ function renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData) {
 
     groupEl.appendChild(levelSection);
   }
+
+  // 点击「点击修改」打开悟性输入弹窗，保存后刷新当前弹窗内所有熟练度要求展示
+  groupEl.addEventListener("click", (e) => {
+    if (!e.target.closest(".prof-req-edit")) return;
+    const wuxing = getWuxing();
+    showWuxingInputModal(wuxing, (newWuxing) => {
+      if (!setWuxing(newWuxing)) return;
+      const scope = groupEl.closest(".modal-body") || groupEl;
+      refreshProficiencyReqs(scope, potEfficiency, newWuxing);
+      toast(`悟性已保存为 ${newWuxing}`, "success", 1500);
+    });
+  });
 
   return groupEl;
 }
