@@ -104,7 +104,7 @@ export async function showAvgQiAtkPresetModal({
     exp: 40,
     dex: 130,
     neiliTalDef: 10,
-    neiliAttrDef: 600,
+    neiliAttrDef: 2000,
   };
 
   let curWeaponType = skillC.weaponType ?? "";
