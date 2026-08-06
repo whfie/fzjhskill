@@ -35,6 +35,7 @@ let activeSkillData = null;
 let skillAutoData = null;
 let bookSkillUnlockData = null;
 let weaponSpecialsData = null;
+let meditateCanyeData = null;
 let searchIndex = new Map();
 
 // === 并发控制 / 取消令牌 ===
@@ -202,8 +203,10 @@ function loadExtras() {
       loadResource("skillAuto"),
       loadResource("bookSkills"),
       loadResource("weaponSpecials"),
+      loadResource("activeZhaoMeditateCanye"),
     ]);
-    const [activeZhao, skillAuto, bookSkills, weaponSpecials] = results;
+    const [activeZhao, skillAuto, bookSkills, weaponSpecials, meditateCanye] =
+      results;
     activeSkillData =
       activeZhao.status === "fulfilled" ? activeZhao.value : null;
     skillAutoData = skillAuto.status === "fulfilled" ? skillAuto.value : null;
@@ -211,6 +214,8 @@ function loadExtras() {
       bookSkills.status === "fulfilled" ? bookSkills.value : null;
     weaponSpecialsData =
       weaponSpecials.status === "fulfilled" ? weaponSpecials.value : null;
+    meditateCanyeData =
+      meditateCanye.status === "fulfilled" ? meditateCanye.value : null;
 
     // 预构建 skillId → [activeSkillId...] 反向索引，供 findActiveSkills 与搜索索引 O(1) 查表
     if (activeSkillData?.skillRelation) {
@@ -516,6 +521,7 @@ async function handleCardAction(action, skillId, skill, extra) {
           extra.activeId,
           activeSkillData,
           bookSkillUnlockData,
+          meditateCanyeData,
           { skillId, skill, skillAutoData },
         );
       }
@@ -530,6 +536,7 @@ async function handleCardAction(action, skillId, skill, extra) {
         skillId,
         activeSkillData,
         bookSkillUnlockData,
+        meditateCanyeData,
         { skillId, skill, skillAutoData },
       );
       break;

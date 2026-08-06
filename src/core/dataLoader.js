@@ -15,6 +15,10 @@ const DATA_SOURCES = [(path) => `${BASE_URL}/data/${path}`];
 const RESOURCES = {
   skill: { file: "skill.json.gz", cacheKey: "skill.json" },
   activeZhao: { file: "activeZhao.json.gz", cacheKey: "activeZhao.json" },
+  activeZhaoMeditateCanye: {
+    file: "activeZhaoMeditateCanye.json.gz",
+    cacheKey: "activeZhaoMeditateCanye.json",
+  },
   skillAuto: { file: "skillAuto.json.gz", cacheKey: "skillAuto.json" },
   bookSkills: { file: "bookSkills.json.gz", cacheKey: "bookSkills.json" },
   meridianMapConfig: {

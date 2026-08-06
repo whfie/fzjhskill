@@ -229,6 +229,7 @@ export function showActiveSkillModal(
   activeId,
   activeSkillData,
   bookSkillUnlockData,
+  meditateCanyeData,
   extraOpts = {},
 ) {
   const groups = findActiveSkillsByActiveId(activeId, activeSkillData);
@@ -254,6 +255,7 @@ export function showActiveSkillModal(
     group,
     activeSkillData,
     bookSkillUnlockData,
+    meditateCanyeData,
     skillOpts,
   );
   body.appendChild(groupEl);
@@ -268,6 +270,7 @@ export function showAllActiveSkillsModal(
   skillId,
   activeSkillData,
   bookSkillUnlockData,
+  meditateCanyeData,
   extraOpts = {},
 ) {
   const groups = findActiveSkills(skillId, activeSkillData);
@@ -290,7 +293,13 @@ export function showAllActiveSkillsModal(
 
   groups.forEach((group) => {
     body.appendChild(
-      renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData, skillOpts),
+      renderActiveSkillGroup(
+        group,
+        activeSkillData,
+        bookSkillUnlockData,
+        meditateCanyeData,
+        skillOpts,
+      ),
     );
   });
 
@@ -317,8 +326,25 @@ function findActiveSkillsByActiveId(activeId, activeSkillData) {
   return [{ activeId, baseActive: baseSkill, allActives: skills }];
 }
 
+// 根据主动技能ID查找对应残页的感悟值（toEnergyBase）
+// 残页键名规则：去除 activeId 末尾数字后 + "canye"（与 getBookLearnText 一致）
+function getMeditateEnergyBase(activeId, meditateCanyeData) {
+  if (!meditateCanyeData?.data) return null;
+  const m = String(activeId).match(/^(.*?)\d*$/);
+  const normalized = m ? m[1] : activeId;
+  const canyeKey = `${normalized}canye`;
+  const entry = meditateCanyeData.data[canyeKey];
+  return entry?.toEnergyBase ?? null;
+}
+
 // 渲染单个主动技能组（复用原逻辑）
-function renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData, skillOpts = {}) {
+function renderActiveSkillGroup(
+  group,
+  activeSkillData,
+  bookSkillUnlockData,
+  meditateCanyeData,
+  skillOpts = {},
+) {
   const { activeId, baseActive, allActives } = group;
   const groupEl = el("div", { class: "active-skill-group" });
   // 该武学的潜能效率（用于计算各重熟练度要求）
@@ -345,11 +371,23 @@ function renderActiveSkillGroup(group, activeSkillData, bookSkillUnlockData, ski
       ? el("span", { class: "badge badge-info" }, levelNames[baseActive.level])
       : null;
 
+  // 感悟标签：根据残页对应的 toEnergyBase 值展示
+  const energyBase = getMeditateEnergyBase(activeId, meditateCanyeData);
+  const energyBadge =
+    energyBase != null
+      ? el(
+          "span",
+          { class: "badge badge-warning" },
+          `${energyBase}感悟`,
+        )
+      : null;
+
   const header = el("div", { class: "active-skill-header" }, [
     el("div", { class: "header-left" }, [
       el("span", { class: "active-skill-name" }, baseActive.name || activeId),
       ...(typeBadge ? [typeBadge] : []),
       ...(levelBadge ? [levelBadge] : []),
+      ...(energyBadge ? [energyBadge] : []),
     ]),
     el(
       "button",
