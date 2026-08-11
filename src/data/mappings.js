@@ -32,6 +32,52 @@ export function getElementName(id) {
   return ELEMENT_NAMES[id] || ELEMENT_NAMES[String(id)] || id;
 }
 
+// 伤害类型详细对应关系（ID → 名称）
+export const DAMAGE_CLASS_MAP = {
+  1: { id: "1", damageClassName: "无性伤害", atkDamageClassName: "无性伤害", defDamageClassName: "无性防御" },
+  2: { id: "2", damageClassName: "无性毒", atkDamageClassName: "无性毒伤", defDamageClassName: "无性毒抗" },
+  3: { id: "3", damageClassName: "阳性伤害", atkDamageClassName: "阳性伤害", defDamageClassName: "阳性防御" },
+  4: { id: "4", damageClassName: "阳性毒", atkDamageClassName: "阳性毒伤", defDamageClassName: "阳性毒抗" },
+  5: { id: "5", damageClassName: "阴性伤害", atkDamageClassName: "阴性伤害", defDamageClassName: "阴性防御" },
+  6: { id: "6", damageClassName: "阴性毒", atkDamageClassName: "阴性毒伤", defDamageClassName: "阴性毒抗" },
+  7: { id: "7", damageClassName: "混元伤害", atkDamageClassName: "混元伤害", defDamageClassName: "混元防御" },
+  8: { id: "8", damageClassName: "混元毒", atkDamageClassName: "混元毒伤", defDamageClassName: "混元毒抗" },
+  9: { id: "9", damageClassName: "外功伤害", atkDamageClassName: "外功伤害", defDamageClassName: "外功防御" },
+  10: { id: "10", damageClassName: "外功流血", atkDamageClassName: "外功流血", defDamageClassName: "外功血耐" },
+  11: { id: "11", damageClassName: "化劲", atkDamageClassName: "化劲伤害", defDamageClassName: "化劲防御" },
+  12: { id: "12", damageClassName: "化劲流血", atkDamageClassName: "化劲流血", defDamageClassName: "化劲血耐" },
+  13: { id: "13", damageClassName: "罡劲", atkDamageClassName: "罡劲伤害", defDamageClassName: "罡劲防御" },
+  14: { id: "14", damageClassName: "罡劲流血", atkDamageClassName: "罡劲流血", defDamageClassName: "罡劲血耐" },
+  15: { id: "15", damageClassName: "音波", atkDamageClassName: "音波伤害", defDamageClassName: "音波防御" },
+  16: { id: "16", damageClassName: "音波流血", atkDamageClassName: "音波流血", defDamageClassName: "音波血耐" },
+  17: { id: "17", damageClassName: "谙技", atkDamageClassName: "谙技伤害", defDamageClassName: "谙技防御" },
+  18: { id: "18", damageClassName: "谙劲流血", atkDamageClassName: "谙劲流血", defDamageClassName: "谙劲血耐" },
+  19: { id: "19", damageClassName: "钝劲", atkDamageClassName: "钝劲伤害", defDamageClassName: "钝劲防御" },
+  20: { id: "20", damageClassName: "锐劲", atkDamageClassName: "锐劲伤害", defDamageClassName: "锐劲防御" },
+  21: { id: "21", damageClassName: "铩劲", atkDamageClassName: "铩劲伤害", defDamageClassName: "铩劲防御" },
+  22: { id: "22", damageClassName: "铩劲流血", atkDamageClassName: "铩劲流血", defDamageClassName: "铩劲血耐" },
+  23: { id: "23", damageClassName: "明劲", atkDamageClassName: "明劲伤害", defDamageClassName: "明劲防御" },
+  24: { id: "24", damageClassName: "明功流血", atkDamageClassName: "明功流血", defDamageClassName: "明功血耐" },
+  25: { id: "25", damageClassName: "透劲", atkDamageClassName: "透劲伤害", defDamageClassName: "透劲防御" },
+  26: { id: "26", damageClassName: "元劲", atkDamageClassName: "元劲伤害", defDamageClassName: "元劲防御" },
+  27: { id: "27", damageClassName: "减元", atkDamageClassName: "减元伤害", defDamageClassName: "减元防御" },
+  28: { id: "28", damageClassName: "增元", atkDamageClassName: "增元伤害", defDamageClassName: "增元防御" },
+  29: { id: "29", damageClassName: "气功", atkDamageClassName: "气功伤害", defDamageClassName: "气功防御" },
+  30: { id: "30", damageClassName: "割伤流血", atkDamageClassName: "割伤流血", defDamageClassName: "割伤血耐" },
+  31: { id: "31", damageClassName: "谙功", atkDamageClassName: "谙功伤害", defDamageClassName: "谙功防御" },
+  32: { id: "32", damageClassName: "外震", atkDamageClassName: "外震伤害", defDamageClassName: "外震防御" },
+};
+
+export function getAtkDamageClassName(id) {
+  const entry = DAMAGE_CLASS_MAP[id] || DAMAGE_CLASS_MAP[String(id)];
+  return entry ? entry.atkDamageClassName : id;
+}
+
+export function getDefDamageClassName(id) {
+  const entry = DAMAGE_CLASS_MAP[id] || DAMAGE_CLASS_MAP[String(id)];
+  return entry ? entry.defDamageClassName : id;
+}
+
 // 装备武器类型
 export const WEAPON_TYPES = {
   jianfa1: "长剑",

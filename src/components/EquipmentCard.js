@@ -16,9 +16,9 @@ function parseEquipmentName(name) {
   let color = null;
 
   const colorPatterns = [
-    /^\[([A-Z]{2,4})\]/,
-    /^([A-Z]{2,4}):/,
-    /^([A-Z]{2,4})/,
+    /^\[([A-Z]{2,8})\]/,
+    /^([A-Z]{2,8}):/,
+    /^([A-Z]{2,8})/,
   ];
 
   for (const pattern of colorPatterns) {
@@ -35,14 +35,14 @@ function parseEquipmentName(name) {
   }
 
   if (!color) {
-    const bracketMatch = processedName.match(/\[([A-Z]{2,4})\]/);
+    const bracketMatch = processedName.match(/\[([A-Z]{2,8})\]/);
     if (bracketMatch) {
       const colorId = bracketMatch[1];
       const colorInfo = colorMapping.ColorCode?.[colorId];
       if (colorInfo) {
         color = parseColorCode(colorInfo.color);
       }
-      processedName = processedName.replace(/\[([A-Z]{2,4})\]/, '');
+      processedName = processedName.replace(/\[([A-Z]{2,8})\]/, '');
     }
   }
 

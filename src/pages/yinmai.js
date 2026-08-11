@@ -4,7 +4,7 @@ import { initHeader } from '../components/Header.js';
 import { Modal } from '../components/Modal.js';
 import { toast } from '../components/Toast.js';
 import { loadResource, getDataVersion } from '../core/dataLoader.js';
-import { getElementName, getResourceName } from '../data/mappings.js';
+import { getResourceName, getAtkDamageClassName, getDefDamageClassName } from '../data/mappings.js';
 import { el, clearChildren } from '../utils/dom.js';
 import { formatTime, formatPercent } from '../utils/format.js';
 
@@ -304,9 +304,10 @@ function isLinkUsedElsewhere(linkId, currentGroove) {
 function formatProperties(properties) {
   if (!properties?.length) return '无';
   return properties.map((prop) => {
-    const element = getElementName(prop[2]);
-    const type = prop[1] === 'defDamageClass' ? '防御' : '伤害';
-    return `${element}${type}: ${formatPercent(prop[3])}`;
+    const name = prop[1] === 'defDamageClass'
+      ? getDefDamageClassName(prop[2])
+      : getAtkDamageClassName(prop[2]);
+    return `${name}: ${formatPercent(prop[3])}`;
   }).join('，');
 }
 
@@ -380,9 +381,10 @@ function refreshTotalDisplay() {
   }
   entries.forEach(([key, value]) => {
     const [propType, elementId] = key.split('_');
-    const element = getElementName(elementId);
-    const type = propType === 'defDamageClass' ? '防御' : '伤害';
-    list.appendChild(el('span', { class: 'total-attr-item' }, `${element}${type}: ${formatPercent(value)}`));
+    const name = propType === 'defDamageClass'
+      ? getDefDamageClassName(elementId)
+      : getAtkDamageClassName(elementId);
+    list.appendChild(el('span', { class: 'total-attr-item' }, `${name}: ${formatPercent(value)}`));
   });
 }
 

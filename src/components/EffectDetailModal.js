@@ -3,6 +3,7 @@ import { el, clearChildren } from "../utils/dom.js";
 import { Modal } from "./Modal.js";
 import {
   getElementName,
+  getAtkDamageClassName,
   CALC_PARAM_NAMES,
   CALC_SELECT_PARAMS,
 } from "../data/mappings.js";
@@ -256,12 +257,14 @@ export function showEffectDetail(
   const body = modal.getBody();
 
   // 显示数据
-  const displayData = { ...effectData };
-  if (displayData.activeZhaoAtkDamageClass) {
-    displayData.activeZhaoAtkDamageClass = getElementName(
-      displayData.activeZhaoAtkDamageClass,
-    );
-  }
+  // 先放入「伤害类型」字段（置顶），再展开原始数据，
+  // 原 activeZhaoAtkDamageClass 保留原始数值
+  const displayData = {
+    伤害类型: effectData.activeZhaoAtkDamageClass
+      ? getAtkDamageClassName(effectData.activeZhaoAtkDamageClass)
+      : undefined,
+    ...effectData,
+  };
 
   const jsonViewer = el("div", {
     class: "json-viewer",
