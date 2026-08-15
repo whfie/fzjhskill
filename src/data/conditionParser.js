@@ -28,7 +28,8 @@ export function conditionToCN(ctype, id, logic, value) {
     case '属性':
       return `【${getAttrName(id)}】${logicWord}${value}`;
 
-    case '武功': {
+    case '武功':
+    case '技能': {
       const skill = getSkill(id);
       if (skill) return `【${skill.name}】${logicWord}${value}级`;
       return undefined;

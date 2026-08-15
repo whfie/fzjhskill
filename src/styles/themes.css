@@ -38,6 +38,10 @@
   --element: #7a5c9e;
   --element-light: #f0e6f5;
 
+  --condition: #b07b27;
+  --condition-light: #fbf3e2;
+  --condition-border: rgba(176, 123, 39, 0.22);
+
   --border: #d8cfb8;
   --border-light: #e8e0cc;
   --border-strong: #b8a878;
@@ -100,6 +104,10 @@
   --element: #9a6ab8;
   --element-light: #221428;
 
+  --condition: #d4a85a;
+  --condition-light: #2c2010;
+  --condition-border: rgba(212, 168, 90, 0.3);
+
   /* 边框：比卡片背景亮度显著提升，确保线条清晰可见 */
   --border: #3e3d32; /* 常规边框，约 2× 卡片亮度 */
   --border-light: #302f26; /* 淡边框 */
@@ -160,6 +168,10 @@
 
   --element: #9e6b85;
   --element-light: #e8d8e0;
+
+  --condition: #9a6a1e;
+  --condition-light: #f3ecd8;
+  --condition-border: rgba(154, 106, 30, 0.22);
 
   --border: #c0b898;
   --border-light: #d0c8a8;

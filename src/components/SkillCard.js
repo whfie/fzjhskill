@@ -9,6 +9,7 @@ import {
   NPC_SKILLS,
   getWxClassifyName,
 } from "../data/mappings.js";
+import { conditionToCN } from "../data/conditionParser.js";
 import { findActiveSkills, getPassiveStats } from "./SkillDetailModal.js";
 import { computeDefaultAvgQiAtk } from "./EffectDetailModal.js";
 import { loadResource } from "../core/dataLoader.js";
@@ -176,6 +177,67 @@ export function createSkillCard(id, skill, onAction, data) {
       el("div", { class: "skill-meta-row" }, [
         el("span", { class: "skill-meta-label" }, "装备："),
         ...types.map((t) => el("span", { class: "badge badge-muted" }, t)),
+      ]),
+    );
+  }
+
+  // 学习条件（skill 直接携带 ConditionId_i / conditionType_i / Logic_i / conditonValue_i）
+  // 异常条件（字段空白、翻译为空或翻译结果含空白占位）直接剔除，不展示
+  const learnCondTexts = (() => {
+    const out = [];
+    for (let i = 1; i <= 20; i++) {
+      const cid = skill[`ConditionId_${i}`];
+      if (cid === undefined || cid === null || cid === "") break;
+      const ctype = skill[`conditionType_${i}`];
+      const logic = skill[`Logic_${i}`];
+      const value = skill[`conditonValue_${i}`];
+      if (ctype === undefined || ctype === null || ctype === "") continue;
+      if (logic === undefined || logic === null || logic === "") continue;
+      if (value === undefined || value === null || value === "") continue;
+      const text = conditionToCN(ctype, cid, logic, value);
+      // 过滤翻译失败 / 含空白占位的异常条件
+      if (!text) continue;
+      if (/undefined|【\s*】|【】/.test(text)) continue;
+      out.push(text);
+    }
+    return out;
+  })();
+  if (learnCondTexts.length > 0) {
+    const collapsed = learnCondTexts.length > 1;
+    const badges = learnCondTexts.map((t) =>
+      el("span", { class: "badge badge-condition" }, t),
+    );
+    const toggleBtn = collapsed
+      ? el(
+          "button",
+          {
+            class: "skill-condition-toggle",
+            type: "button",
+            onclick: (e) => {
+              const list = e.currentTarget.previousElementSibling;
+              const isCollapsed = list.classList.toggle("collapsed");
+              e.currentTarget.classList.toggle("expanded", !isCollapsed);
+              e.currentTarget.querySelector(".toggle-text").textContent =
+                isCollapsed
+                  ? `展开全部 ${learnCondTexts.length} 条`
+                  : "收起";
+            },
+          },
+          [
+            el("span", { class: "toggle-text" }, `展开全部 ${learnCondTexts.length} 条`),
+            el("span", { class: "toggle-arrow" }, "▾"),
+          ],
+        )
+      : null;
+    body.appendChild(
+      el("div", { class: "skill-condition-block" }, [
+        el("span", { class: "skill-meta-label skill-condition-label" }, "学习条件："),
+        el(
+          "div",
+          { class: "skill-condition-list" + (collapsed ? " collapsed" : "") },
+          badges,
+        ),
+        toggleBtn,
       ]),
     );
   }
