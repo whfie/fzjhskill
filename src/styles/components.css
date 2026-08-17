@@ -718,62 +718,105 @@
   color: var(--element);
 }
 
-/* 学习条件（琥珀/暖色系，与条件语境呼应，三主题一致） */
-.skill-condition-block {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 4px 8px;
-  margin-top: 2px;
-}
-.skill-condition-label {
-  flex: 0 0 100%;
-  margin-bottom: 1px;
-}
-.skill-condition-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px 7px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.skill-condition-list.collapsed .badge-condition:nth-child(n + 2) {
-  display: none;
-}
-.badge-condition {
+/* 学习条件（独立卡片式区块，琥珀/暖色系，默认折叠，点击头部展开） */
+[data-theme] .skill-condition-block {
+  margin-top: 12px;
+  padding: 8px 10px;
   background: var(--condition-light);
-  color: var(--condition);
   border: 1px solid var(--condition-border);
-  padding: 2px 9px;
-  font-weight: 500;
-  white-space: nowrap;
-  font-size: 12px;
-  line-height: 1.5;
+  border-left: 3px solid var(--condition);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition:
+    padding 0.2s ease,
+    background 0.2s ease;
 }
-.skill-condition-toggle {
-  flex: 0 0 auto;
-  align-self: center;
+
+[data-theme] .skill-condition-block.is-collapsed {
+  padding-bottom: 8px;
+}
+
+[data-theme] .skill-condition-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease;
+}
+
+[data-theme] .skill-condition-header:hover {
+  opacity: 0.85;
+}
+
+[data-theme] .skill-condition-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--condition);
+  letter-spacing: 0.3px;
+}
+
+/* 折叠指示器：默认展开态（向下），折叠态时旋转为向右 */
+[data-theme] .skill-condition-chevron {
+  margin-left: auto;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--condition);
+  transition: transform 0.25s ease, border-top-color 0.2s ease;
+  transform: rotate(0deg);
+  flex-shrink: 0;
+}
+
+[data-theme] .skill-condition-block.is-collapsed .skill-condition-chevron {
+  transform: rotate(-90deg) !important;
+}
+
+[data-theme] .skill-condition-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-height: 500px;
+  padding-top: 6px;
+  overflow: hidden;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    max-height 0.28s ease,
+    opacity 0.22s ease,
+    padding-top 0.22s ease,
+    transform 0.22s ease;
+}
+
+[data-theme] .skill-condition-block.is-collapsed .skill-condition-list {
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  opacity: 0 !important;
+  transform: translateY(-4px) !important;
+  pointer-events: none !important;
+}
+
+[data-theme] .skill-condition-chip {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  border: none;
-  background: transparent;
+  padding: 3px 9px;
+  font-size: 0.74rem;
+  font-weight: 500;
   color: var(--condition);
-  font-size: 12px;
-  padding: 1px 4px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background 0.15s ease;
+  background: var(--bg-card);
+  border: 1px solid var(--condition-border);
+  border-radius: 10px;
+  white-space: nowrap;
+  line-height: 1.5;
+  transition: all var(--transition);
 }
-.skill-condition-toggle:hover {
-  background: var(--condition-light);
-}
-.skill-condition-toggle .toggle-arrow {
-  font-size: 10px;
-  transition: transform 0.15s ease;
-}
-.skill-condition-toggle.expanded .toggle-arrow {
-  transform: rotate(180deg);
+
+[data-theme] .skill-condition-chip:hover {
+  background: var(--condition);
+  color: var(--bg-card);
+  border-color: var(--condition);
 }
 
 /* ===== 主动技能操作区 ===== */

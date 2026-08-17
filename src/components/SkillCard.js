@@ -202,45 +202,35 @@ export function createSkillCard(id, skill, onAction, data) {
     }
     return out;
   })();
-  if (learnCondTexts.length > 0) {
-    const collapsed = learnCondTexts.length > 1;
-    const badges = learnCondTexts.map((t) =>
-      el("span", { class: "badge badge-condition" }, t),
+  // 学习条件：置于伤害/招架属性与武学系数之间，默认折叠，点击头部展开
+  const learnCondBlock = (() => {
+    if (learnCondTexts.length === 0) return null;
+    const condList = el(
+      "div",
+      { class: "skill-condition-list" },
+      learnCondTexts.map((t) =>
+        el("span", { class: "skill-condition-chip" }, t),
+      ),
     );
-    const toggleBtn = collapsed
-      ? el(
-          "button",
-          {
-            class: "skill-condition-toggle",
-            type: "button",
-            onclick: (e) => {
-              const list = e.currentTarget.previousElementSibling;
-              const isCollapsed = list.classList.toggle("collapsed");
-              e.currentTarget.classList.toggle("expanded", !isCollapsed);
-              e.currentTarget.querySelector(".toggle-text").textContent =
-                isCollapsed
-                  ? `展开全部 ${learnCondTexts.length} 条`
-                  : "收起";
-            },
-          },
-          [
-            el("span", { class: "toggle-text" }, `展开全部 ${learnCondTexts.length} 条`),
-            el("span", { class: "toggle-arrow" }, "▾"),
-          ],
-        )
-      : null;
-    body.appendChild(
-      el("div", { class: "skill-condition-block" }, [
-        el("span", { class: "skill-meta-label skill-condition-label" }, "学习条件："),
-        el(
-          "div",
-          { class: "skill-condition-list" + (collapsed ? " collapsed" : "") },
-          badges,
-        ),
-        toggleBtn,
-      ]),
-    );
-  }
+    const chevron = el("span", { class: "skill-condition-chevron" });
+    const header = el("div", { class: "skill-condition-header" }, [
+      el("span", { class: "skill-condition-title" }, "学习条件"),
+      chevron,
+    ]);
+    const block = el("div", { class: "skill-condition-block is-collapsed" }, [
+      header,
+      condList,
+    ]);
+    header.addEventListener("click", (e) => {
+      e.stopPropagation();
+      block.classList.toggle("is-collapsed");
+    });
+    // 防止点击条件 chip / 列表区域冒泡触发卡片弹窗
+    condList.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+    return block;
+  })();
 
   // 伤害属性 + 招架属性（同一行展示，各占一半宽度）
   const hasDamageAttr =
@@ -276,6 +266,9 @@ export function createSkillCard(id, skill, onAction, data) {
       body.appendChild(el("div", { class: "skill-meta-row" }, cells));
     }
   }
+
+  // 学习条件（置于伤害/招架属性与武学系数之间）
+  if (learnCondBlock) body.appendChild(learnCondBlock);
 
   // 属性列表（武学系数 + 招式系数统一展示）
   const attrList = el("div", { class: "attr-list" });
