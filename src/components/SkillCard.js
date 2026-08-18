@@ -185,20 +185,40 @@ export function createSkillCard(id, skill, onAction, data) {
   // 异常条件（字段空白、翻译为空或翻译结果含空白占位）直接剔除，不展示
   const learnCondTexts = (() => {
     const out = [];
+    const pushCond = (ctype, cid, logic, value) => {
+      if (ctype === undefined || ctype === null || ctype === "") return;
+      if (cid === undefined || cid === null || cid === "") return;
+      if (logic === undefined || logic === null || logic === "") return;
+      if (value === undefined || value === null || value === "") return;
+      const text = conditionToCN(ctype, cid, logic, value);
+      if (!text) return;
+      if (/undefined|【\s*】|【】/.test(text)) return;
+      out.push(text);
+    };
+    // 1) 主 skill 自带的学习条件
     for (let i = 1; i <= 20; i++) {
       const cid = skill[`ConditionId_${i}`];
       if (cid === undefined || cid === null || cid === "") break;
-      const ctype = skill[`conditionType_${i}`];
-      const logic = skill[`Logic_${i}`];
-      const value = skill[`conditonValue_${i}`];
-      if (ctype === undefined || ctype === null || ctype === "") continue;
-      if (logic === undefined || logic === null || logic === "") continue;
-      if (value === undefined || value === null || value === "") continue;
-      const text = conditionToCN(ctype, cid, logic, value);
-      // 过滤翻译失败 / 含空白占位的异常条件
-      if (!text) continue;
-      if (/undefined|【\s*】|【】/.test(text)) continue;
-      out.push(text);
+      pushCond(
+        skill[`conditionType_${i}`],
+        cid,
+        skill[`Logic_${i}`],
+        skill[`conditonValue_${i}`],
+      );
+    }
+    // 2) bookSkills 中的书技学习条件（learnCondition=1 时 learnValue 为 "id;数值"）
+    const bookSkill = data?.bookSkillUnlockData?.skills?.[id];
+    if (bookSkill && bookSkill.learnCondition && bookSkill.learnCondition !== 0) {
+      const lv = bookSkill.learnValue;
+      if (typeof lv === "string") {
+        const parts = lv.split(";");
+        for (let j = 0; j + 1 < parts.length; j += 2) {
+          const cid = parts[j];
+          const value = Number(parts[j + 1]);
+          if (cid === undefined || cid === "" || Number.isNaN(value)) continue;
+          pushCond("技能", cid, "大于等于", value);
+        }
+      }
     }
     return out;
   })();

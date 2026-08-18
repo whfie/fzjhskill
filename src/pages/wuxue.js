@@ -476,6 +476,7 @@ function refreshList(seq) {
       createSkillCard(id, skill, handleCardAction, {
         activeSkillData,
         skillAutoData,
+        bookSkillUnlockData,
       }),
     );
   });
