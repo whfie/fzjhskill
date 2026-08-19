@@ -357,12 +357,12 @@ function renderEquippedInfo(grooveElement, link) {
 // 更新总属性
 function updateTotalAttributes(operation, linkData) {
   const modifier = operation === 'add' ? 1 : -1;
-  linkData.property?.forEach((prop) => {
+  (Array.isArray(linkData.property) ? linkData.property : []).forEach((prop) => {
     const [, propType, elementId, value] = prop;
     const key = `${propType}_${elementId}`;
     totalAttributes[key] = (totalAttributes[key] || 0) + value * modifier;
   });
-  linkData.specialproperty?.forEach((prop) => {
+  (Array.isArray(linkData.specialproperty) ? linkData.specialproperty : []).forEach((prop) => {
     const [, propType, elementId, value] = prop;
     const key = `${propType}_${elementId}`;
     totalAttributes[key] = (totalAttributes[key] || 0) + value * modifier;
