@@ -504,7 +504,7 @@ export const CALC_SELECT_PARAMS = [
     default: 0,
   },
   {
-    pattern: /^combatStack(14|15|16|17|19|20|21)num$/,
+    pattern: /^combatStack(14|15|16|17|18|19|20|21)num$/,
     label: "隐脉加成",
     options: [
       { label: "无", value: 0 },
