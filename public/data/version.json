@@ -1,12 +1,12 @@
 {
-  "version": "2026.08.12",
+  "version": "2026.08.26",
   "files": {
-    "skill.json": "2026.08.12",
-    "activeZhao.json": "2026.08.12",
-    "skillAuto.json": "2026.08.12",
-    "MeridianMapConfig.json": "2026.08.12",
-    "AcupointConfig.json": "2026.08.12",
-    "MeridianLinkConfig.json": "2026.08.12",
-    "weaponSpecials.json": "2026.08.12"
+    "skill.json": "2026.08.26",
+    "activeZhao.json": "2026.08.26",
+    "skillAuto.json": "2026.08.26",
+    "MeridianMapConfig.json": "2026.08.26",
+    "AcupointConfig.json": "2026.08.26",
+    "MeridianLinkConfig.json": "2026.08.26",
+    "weaponSpecials.json": "2026.08.26"
   }
 }
