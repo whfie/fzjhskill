@@ -415,8 +415,10 @@ function renderActiveSkillGroup(
   baseDataPre.style.display = "none";
   groupEl.appendChild(baseDataPre);
 
-  if (allActives.length > 1) {
+  // 单重（仅 1 重数据）的主动技能同样需要渲染效果内容，与多重展示保持一致
+  if (allActives.length >= 1) {
     const firstData = allActives[0].data;
+    const isMulti = allActives.length > 1;
 
     // 学习条件
     const learnConditions = collectConditions("learn", firstData);
@@ -438,36 +440,38 @@ function renderActiveSkillGroup(
     const useCard = renderConditionCard("使用条件", useConditions);
     if (useCard) groupEl.appendChild(useCard);
 
-    // 各重数差异
+    // 各重数差异（仅多重时展示“差异”表头与折叠切换，单重直接展示效果行）
     const levelSection = el("div", { class: "level-diff-section" });
-    levelSection.appendChild(
-      el("div", { class: "level-diff-header" }, [
-        el(
-          "span",
-          {
-            class: "text-sm",
-            style: { fontWeight: "600", color: "var(--text-secondary)" },
-          },
-          "各重数差异",
-        ),
-        el(
-          "span",
-          {
-            class: "level-diff-toggle",
-            onclick: (e) => {
-              const expanded = e.target.dataset.expanded === "true";
-              levelSection.querySelectorAll(".level-row").forEach((row) => {
-                const level = parseInt(row.dataset.level);
-                if (level <= 8) row.style.display = expanded ? "none" : "flex";
-              });
-              e.target.dataset.expanded = !expanded;
-              e.target.textContent = expanded ? "展开 ▾" : "收起 ▴";
+    if (isMulti) {
+      levelSection.appendChild(
+        el("div", { class: "level-diff-header" }, [
+          el(
+            "span",
+            {
+              class: "text-sm",
+              style: { fontWeight: "600", color: "var(--text-secondary)" },
             },
-          },
-          "展开 ▾",
-        ),
-      ]),
-    );
+            "各重数差异",
+          ),
+          el(
+            "span",
+            {
+              class: "level-diff-toggle",
+              onclick: (e) => {
+                const expanded = e.target.dataset.expanded === "true";
+                levelSection.querySelectorAll(".level-row").forEach((row) => {
+                  const level = parseInt(row.dataset.level);
+                  if (level <= 8) row.style.display = expanded ? "none" : "flex";
+                });
+                e.target.dataset.expanded = !expanded;
+                e.target.textContent = expanded ? "展开 ▾" : "收起 ▴";
+              },
+            },
+            "展开 ▾",
+          ),
+        ]),
+      );
+    }
 
     allActives.forEach((skill, index) => {
       if (index > 9) return;
@@ -539,7 +543,8 @@ function renderActiveSkillGroup(
         );
       }
 
-      const isHidden = index < 8;
+      // 单重时不默认隐藏第 1 重（多重时仍默认隐藏前 8 重）
+      const isHidden = isMulti && index < 8;
       levelSection.appendChild(
         el(
           "div",
