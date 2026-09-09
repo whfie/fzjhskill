@@ -430,7 +430,7 @@ export const CALC_PARAM_NAMES = {
   combatStack4num: "生辉层数（上限10）",
   combatStack5num: "天和层数（上限7）",
   combatStack5num2: "天和层数（上限7）",
-  combatStack7num: "【镝】层数（上限7）",
+  combatStack7num: "【镝】层数（上限8）",
   combatStack8num: "复还层数（上限6）",
   combatStack9num: "潜亏层数（上限5）",
   combatStack10num: "驱霆层数（上限10）",
