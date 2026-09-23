@@ -32,6 +32,26 @@ export function getElementName(id) {
   return ELEMENT_NAMES[id] || ELEMENT_NAMES[String(id)] || id;
 }
 
+// 效果类型（effectType）ID → 中文名
+export const EFFECT_TYPE_NAMES = {
+  0: "普通增益",
+  1: "普通减益",
+  2: "控制类",
+  3: "其他类",
+  4: "毒类",
+  5: "特殊增益",
+  6: "特殊减益",
+  7: "特殊毒",
+  9: "恢复类",
+  10: "特殊恢复类",
+  11: "流血消内",
+  12: "特殊流血消内",
+};
+
+export function getEffectTypeName(type) {
+  return EFFECT_TYPE_NAMES[type] ?? EFFECT_TYPE_NAMES[String(type)];
+}
+
 // 伤害类型详细对应关系（ID → 名称）
 export const DAMAGE_CLASS_MAP = {
   1: { id: "1", damageClassName: "无性伤害", atkDamageClassName: "无性伤害", defDamageClassName: "无性防御" },
@@ -381,8 +401,10 @@ export const CALC_PARAM_NAMES = {
   zhengqi: "侠义值",
   qimax: "当前气血上限",
   qiMax2: "对方气血上限",
+  qiMax3: "对方气血上限",
   qi: "当前气血",
   qi2: "对方当前气血",
+  qi3: "对方当前气血",
   neili: "当前内力",
   neili3: "对方当前内力",
   neiliMax: "内力上限",

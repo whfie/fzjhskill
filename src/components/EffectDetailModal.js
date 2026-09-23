@@ -4,6 +4,7 @@ import { Modal } from "./Modal.js";
 import {
   getElementName,
   getAtkDamageClassName,
+  getEffectTypeName,
   CALC_PARAM_NAMES,
   CALC_SELECT_PARAMS,
 } from "../data/mappings.js";
@@ -257,14 +258,22 @@ export function showEffectDetail(
   const body = modal.getBody();
 
   // 显示数据
-  // 先放入「伤害类型」字段（置顶），再展开原始数据，
-  // 原 activeZhaoAtkDamageClass 保留原始数值
-  const displayData = {
-    伤害类型: effectData.activeZhaoAtkDamageClass
-      ? getAtkDamageClassName(effectData.activeZhaoAtkDamageClass)
-      : undefined,
-    ...effectData,
-  };
+  // 先放入「伤害类型」字段（置顶），在 effectType 上方插入「效果类型」，
+  // 再展开原始数据，原 activeZhaoAtkDamageClass 保留原始数值
+  const displayData = {};
+  if (effectData.activeZhaoAtkDamageClass) {
+    displayData["伤害类型"] = getAtkDamageClassName(
+      effectData.activeZhaoAtkDamageClass,
+    );
+  }
+  for (const [key, value] of Object.entries(effectData)) {
+    if (key === "effectType") {
+      const effectTypeName = getEffectTypeName(value);
+      // effectType 值不在对应关系中时，不添加「效果类型」
+      if (effectTypeName !== undefined) displayData["效果类型"] = effectTypeName;
+    }
+    displayData[key] = value;
+  }
 
   const jsonViewer = el("div", {
     class: "json-viewer",
