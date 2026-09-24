@@ -210,6 +210,20 @@ export function extractVariables(script) {
   return Array.from(vars);
 }
 
+// 「加权随机触发」格式（ID#权重|ID#权重|...）转链接 HTML：仅 ID 部分可点击，权重为普通文本
+function weightedEffectIdsToHtml(value, currentId) {
+  if (typeof value !== "string" || !value.includes("|")) return null;
+  const htmlParts = [];
+  for (const part of value.split("|")) {
+    const m = part.match(/^(.+)#(\d+(?:\.\d+)?)$/);
+    if (!m || !isPotentialEffectId(m[1]) || m[1] === currentId) return null;
+    htmlParts.push(
+      `<span class="effect-link json-effect-link" data-effect-id="${m[1]}">${m[1]}</span>#${m[2]}`,
+    );
+  }
+  return htmlParts.join("|");
+}
+
 // 递归处理 JSON 中的效果 ID，转为可点击链接
 function processEffectIds(obj, currentId, processed = new Set()) {
   if (!obj) return obj;
@@ -219,12 +233,21 @@ function processEffectIds(obj, currentId, processed = new Set()) {
   for (const [key, value] of Object.entries(obj)) {
     if (
       key.startsWith("arg") &&
-      isPotentialEffectId(value) &&
+      typeof value === "string" &&
       value !== currentId
     ) {
-      result[key] =
-        `<span class="effect-link json-effect-link" data-effect-id="${value}">${value}</span>`;
-    } else if (typeof value === "object" && value !== null) {
+      const weightedHtml = weightedEffectIdsToHtml(value, currentId);
+      if (weightedHtml) {
+        result[key] = weightedHtml;
+        continue;
+      }
+      if (isPotentialEffectId(value)) {
+        result[key] =
+          `<span class="effect-link json-effect-link" data-effect-id="${value}">${value}</span>`;
+        continue;
+      }
+    }
+    if (typeof value === "object" && value !== null) {
       result[key] = processEffectIds(value, currentId, new Set(processed));
     } else {
       result[key] = value;
@@ -238,7 +261,8 @@ function jsonToHtmlWithLinks(obj, currentId) {
   return JSON.stringify(processed, null, 2)
     .replace(/\\"/g, '"')
     .replace(/"<span/g, "<span")
-    .replace(/<\/span>"/g, "</span>");
+    .replace(/<\/span>"/g, "</span>")
+    .replace(/<\/span>(#\d+(?:\.\d+)?)"/g, "</span>$1");
 }
 
 export function showEffectDetail(
@@ -270,7 +294,8 @@ export function showEffectDetail(
     if (key === "effectType") {
       const effectTypeName = getEffectTypeName(value);
       // effectType 值不在对应关系中时，不添加「效果类型」
-      if (effectTypeName !== undefined) displayData["效果类型"] = effectTypeName;
+      if (effectTypeName !== undefined)
+        displayData["效果类型"] = effectTypeName;
     }
     displayData[key] = value;
   }
