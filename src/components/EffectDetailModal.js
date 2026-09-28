@@ -265,6 +265,182 @@ function jsonToHtmlWithLinks(obj, currentId) {
     .replace(/<\/span>(#\d+(?:\.\d+)?)"/g, "</span>$1");
 }
 
+// 打断/驱散类标签的说明文字
+const TAG_TIPS = {
+  interrupt: "如打断恢复、打断卸力、打断凝血等效果。",
+  dispel: "如清除毒、清除流血消内等效果。",
+};
+
+// 打开弹窗时按计算器默认参数求 duration 数值（仅用于标签判定，不随计算器输入变化）
+function resolveOpenDuration(effectData, defaultParams = {}) {
+  const dur = effectData?.duration;
+  if (typeof dur === "number") return dur;
+  if (typeof dur !== "string" || dur.trim() === "") return 0;
+
+  const jsScript = parseScriptToJS(dur);
+  const vars = extractVariables(jsScript);
+
+  let cachedValues = {};
+  try {
+    const cached = localStorage.getItem("calc_params_all");
+    if (cached) cachedValues = JSON.parse(cached);
+  } catch {}
+
+  // 与计算器默认值解析保持一致：缓存 > 传入参数 > 0（z2/z3 以传入参数为准）
+  const values = {};
+  vars.forEach((v) => {
+    values[v] =
+      cachedValues[v] !== undefined
+        ? cachedValues[v]
+        : defaultParams[v] !== undefined
+          ? defaultParams[v]
+          : 0;
+  });
+  if (defaultParams.z2 !== undefined) values.z2 = defaultParams.z2;
+  if (defaultParams.z3 !== undefined) values.z3 = defaultParams.z3;
+
+  try {
+    const argNames = Object.keys(values);
+    const argVals = Object.values(values);
+    const funcBody = `const math=Math,min=Math.min,max=Math.max,abs=Math.abs,floor=Math.floor,ceil=Math.ceil;${jsScript}`;
+    const func = new Function(...BLOCKED_GLOBALS, ...argNames, funcBody);
+    const res = func(...BLOCKED_GLOBALS.map(() => undefined), ...argVals);
+    if (typeof res === "number" && isFinite(res)) return res;
+  } catch {}
+  return 0;
+}
+
+// 依据 effectType、effectTag、target 与 duration 生成效果标签节点
+function buildEffectTags(effectData, defaultParams = {}) {
+  const nodes = [];
+  const typeNum = Number(effectData.effectType);
+  const inType = (list) => list.includes(typeNum);
+
+  // 不可X 类标签：优先按 effectTag 判定，无 effectTag 时回退到 target 判定
+  const effectTag =
+    typeof effectData.effectTag === "string" && effectData.effectTag !== ""
+      ? effectData.effectTag
+      : null;
+  const negMatch = (flag, fallbackTarget) =>
+    effectTag ? effectTag.includes(flag) : effectData.target === fallbackTarget;
+
+  const addSimple = (label, positive) => {
+    nodes.push(
+      el(
+        "span",
+        { class: `badge ${positive ? "badge-positive" : "badge-negative"}` },
+        label,
+      ),
+    );
+  };
+  const addTip = (label, positive, tip) => {
+    nodes.push(
+      el(
+        "span",
+        {
+          class: `badge ${positive ? "badge-positive" : "badge-negative"} effect-tag-tip`,
+          dataset: { tip },
+        },
+        [label, el("i", { class: "tip-icon" }, "i")],
+      ),
+    );
+  };
+
+  // 效果类型：与下方 JSON 的「效果类型」字段取值一致，无中文映射时不显示
+  const typeName = getEffectTypeName(effectData.effectType);
+  if (typeName !== undefined) {
+    nodes.push(el("span", { class: "badge badge-effect-type" }, typeName));
+  }
+
+  // 以下标签仅在 duration > 0 时展示
+  if (resolveOpenDuration(effectData, defaultParams) <= 0) return nodes;
+
+  if (typeNum === 0) addSimple("可截脉", true);
+  else if (negMatch("b", "自己")) addSimple("不可截脉", false);
+
+  if (inType([9, 22, 24])) addTip("可打断", true, TAG_TIPS.interrupt);
+  else if (inType([10, 23])) addTip("不可打断", false, TAG_TIPS.interrupt);
+
+  if (inType([0, 9])) addSimple("可窃取", true);
+  else if (negMatch("b", "自己")) addSimple("不可窃取", false);
+
+  if (typeNum === 1) addSimple("可净化", true);
+  else if (negMatch("d", "目标")) addSimple("不可净化", false);
+
+  if (inType([4, 11])) addTip("可驱散", true, TAG_TIPS.dispel);
+  else if (inType([7, 12])) addTip("不可驱散", false, TAG_TIPS.dispel);
+
+  return nodes;
+}
+
+// 渲染标签组并处理说明文字气泡（桌面悬停 / 移动端点击）
+function createEffectTagsRow(effectData, defaultParams, body) {
+  const nodes = buildEffectTags(effectData, defaultParams);
+  if (nodes.length === 0) return null;
+
+  const row = el("div", { class: "effect-tags" });
+  nodes.forEach((n) => row.appendChild(n));
+
+  const bubble = el("div", { class: "effect-tag-bubble" });
+  bubble.style.display = "none";
+  row.appendChild(bubble);
+
+  let activeTag = null;
+  const hideBubble = () => {
+    bubble.style.display = "none";
+    if (activeTag) activeTag.classList.remove("is-tip-active");
+    activeTag = null;
+  };
+  const showBubble = (tag) => {
+    if (activeTag && activeTag !== tag)
+      activeTag.classList.remove("is-tip-active");
+    activeTag = tag;
+    tag.classList.add("is-tip-active");
+    bubble.textContent = tag.dataset.tip || "";
+    bubble.style.display = "block";
+    // 默认与标签左对齐，超出右边界时向左回收
+    const tagRect = tag.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+    let left = tagRect.left - rowRect.left;
+    left = Math.max(0, Math.min(left, rowRect.width - bubble.offsetWidth));
+    bubble.style.left = `${left}px`;
+    bubble.style.top = `${tagRect.bottom - rowRect.top + 6}px`;
+  };
+
+  // 桌面端：悬停即展开，移出标签组收起；触屏端：点击开关，避免两种方式互相冲突
+  if (window.matchMedia("(hover: hover)").matches) {
+    row.addEventListener("mouseover", (e) => {
+      const tag = e.target.closest(".effect-tag-tip");
+      if (tag && tag !== activeTag) showBubble(tag);
+    });
+    row.addEventListener("mouseout", (e) => {
+      if (!activeTag) return;
+      const to = e.relatedTarget;
+      if (to && row.contains(to)) return; // 仍在标签行内（含气泡）则保留
+      hideBubble();
+    });
+  } else {
+    row.addEventListener("click", (e) => {
+      const tag = e.target.closest(".effect-tag-tip");
+      if (!tag) return;
+      e.stopPropagation();
+      if (activeTag === tag) hideBubble();
+      else showBubble(tag);
+    });
+  }
+
+  // 点击标签组以外的区域时收起气泡
+  if (body) {
+    body.addEventListener("click", (e) => {
+      if (e.target.closest(".effect-tag-tip") || bubble.contains(e.target))
+        return;
+      hideBubble();
+    });
+  }
+
+  return row;
+}
+
 export function showEffectDetail(
   effectId,
   activeSkillData,
@@ -280,6 +456,10 @@ export function showEffectDetail(
   });
 
   const body = modal.getBody();
+
+  // 效果标签组（置于计算区域与原始数据上方）
+  const tagRow = createEffectTagsRow(effectData, defaultParams, body);
+  if (tagRow) body.appendChild(tagRow);
 
   // 显示数据
   // 先放入「伤害类型」字段（置顶），在 effectType 上方插入「效果类型」，

@@ -765,7 +765,9 @@
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
   border-top: 5px solid var(--condition);
-  transition: transform 0.25s ease, border-top-color 0.2s ease;
+  transition:
+    transform 0.25s ease,
+    border-top-color 0.2s ease;
   transform: rotate(0deg);
   flex-shrink: 0;
 }
@@ -1262,6 +1264,77 @@
 }
 .passive-table tr:hover td {
   background: var(--bg-hover);
+}
+
+/* ===== 效果标签组 ===== */
+.effect-tags {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.effect-tags .badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* 配色：效果类型蓝、可X 绿、不可X 红，底色淡、描边同色 */
+.badge-effect-type {
+  background: var(--info-light);
+  color: var(--info);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--info) 26%, transparent);
+}
+.badge-positive {
+  background: var(--success-light);
+  color: var(--success);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--success) 26%, transparent);
+}
+.badge-negative {
+  background: var(--danger-light);
+  color: var(--danger);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 24%, transparent);
+}
+
+/* 带说明文字的标签：info 图标提示可查看说明 */
+.effect-tag-tip {
+  cursor: help;
+}
+.effect-tag-tip .tip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  margin-left: 5px;
+  border: 1px solid color-mix(in srgb, currentColor 55%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  font-size: 0.56rem;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+}
+.effect-tag-tip:hover,
+.effect-tag-tip.is-tip-active {
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.effect-tag-bubble {
+  position: absolute;
+  z-index: 6;
+  max-width: 260px;
+  padding: 6px 10px;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 /* ===== 效果计算器 ===== */
